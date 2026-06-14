@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chirrp — your dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Quicksand', sans-serif; background: #FEF0F5; color: #2A1A2E; }
+
+    nav {
+      background: #fff; border-bottom: 2px solid #F0D0E4;
+      padding: 14px 32px; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 100;
+    }
+    .logo { font-family: 'Righteous', cursive; font-size: 26px; color: #D63384; text-decoration: none; }
+    .logo span { color: #3AAFE0; }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .nav-avatar { width: 36px; height: 36px; border-radius: 50%; background: #FEF0F5; border: 2px solid #F0D0E4; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; }
+    .nav-name { font-size: 14px; font-weight: 700; color: #2A1A2E; }
+    .logout-btn { font-size: 12px; font-weight: 700; color: #aaa; background: none; border: none; cursor: pointer; font-family: 'Quicksand', sans-serif; }
+    .logout-btn:hover { color: #D63384; }
+
+    main { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
+
+    /* WELCOME */
+    .welcome {
+      background: #D63384; border-radius: 20px; padding: 28px 32px;
+      margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .welcome-left h1 { font-family: 'Righteous', cursive; font-size: 28px; color: #fff; margin-bottom: 6px; }
+    .welcome-left p { font-size: 14px; color: rgba(255,255,255,0.75); }
+    .welcome-avatar { font-size: 52px; }
+
+    /* GRID */
+    .top-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+    .card { background: #fff; border: 2px solid #F0D0E4; border-radius: 16px; padding: 20px; }
+    .card-label { font-size: 11px; font-weight: 700; color: #D63384; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+    .card-title { font-family: 'Righteous', cursive; font-size: 20px; color: #2A1A2E; margin-bottom: 14px; }
+
+    /* STREAK */
+    .streak-num { font-family: 'Righteous', cursive; font-size: 52px; color: #D63384; line-height: 1; }
+    .streak-sub { font-size: 13px; font-weight: 600; color: #aaa; margin-bottom: 14px; }
+    .dots-row { display: flex; gap: 6px; }
+    .dot-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .dot { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #F0D0E4; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #ccc; font-weight: 700; }
+    .dot.done { background: #D63384; border-color: #D63384; color: #fff; }
+    .dot.today { background: #EBF7FD; border-color: #3AAFE0; color: #3AAFE0; }
+    .dot-lbl { font-size: 9px; font-weight: 700; color: #ccc; }
+    .dot-lbl.pink { color: #D63384; }
+    .dot-lbl.blue { color: #3AAFE0; }
+
+    /* XP */
+    .xp-card { background: #2A1A2E; border-color: #2A1A2E; }
+    .xp-card .card-label { color: #F0A0C4; }
+    .xp-num { font-family: 'Righteous', cursive; font-size: 48px; color: #fff; line-height: 1; }
+    .xp-of { font-size: 12px; color: #3AAFE0; margin-bottom: 14px; font-weight: 600; }
+    .xp-track { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+    .xp-fill { height: 100%; background: #D63384; border-radius: 4px; transition: width 1s ease; }
+    .xp-hint { font-size: 11px; color: #555; font-weight: 600; }
+
+    /* TODAY'S CHALLENGE */
+    .challenge-card { display: flex; flex-direction: column; justify-content: space-between; }
+    .ch-chip { display: inline-block; background: #EBF7FD; color: #1A7FAA; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 10px; letter-spacing: 1px; margin-bottom: 10px; }
+    .ch-q { font-family: 'Righteous', cursive; font-size: 15px; color: #2A1A2E; line-height: 1.45; margin-bottom: 8px; flex: 1; }
+    .ch-meta { font-size: 11px; color: #aaa; font-weight: 600; margin-bottom: 14px; }
+    .ch-btn { background: #D63384; color: #fff; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; padding: 11px; border-radius: 12px; border: none; cursor: pointer; width: 100%; }
+    .ch-btn:hover { background: #c0226e; }
+
+    /* PRACTICE MODES */
+    .sec-label { font-size: 11px; font-weight: 700; color: #D63384; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+    .sec-title { font-family: 'Righteous', cursive; font-size: 22px; color: #2A1A2E; margin-bottom: 16px; }
+    .modes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 24px; }
+    .mode-card {
+      background: #fff; border: 2px solid #F0D0E4; border-radius: 16px;
+      padding: 20px; cursor: pointer; transition: all 0.18s; text-decoration: none; display: block;
+    }
+    .mode-card:hover { border-color: #D63384; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(214,51,132,0.1); }
+    .mode-icon { font-size: 28px; margin-bottom: 10px; }
+    .mode-name { font-size: 15px; font-weight: 700; color: #2A1A2E; margin-bottom: 4px; }
+    .mode-desc { font-size: 12px; color: #aaa; line-height: 1.6; }
+    .mode-pill { display: inline-block; margin-top: 10px; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 10px; }
+    .mode-pill.pink { background: #FEF0F5; color: #D63384; }
+    .mode-pill.blue { background: #EBF7FD; color: #1A7FAA; }
+
+    /* WEEKLY */
+    .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .wk-days { display: flex; gap: 8px; margin-top: 12px; }
+    .wk-d { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .wk-circle { width: 34px; height: 34px; border-radius: 50%; border: 2px solid #F0D0E4; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .wk-circle.done { background: #D63384; border-color: #D63384; color: #fff; }
+    .wk-circle.today { background: #EBF7FD; border-color: #3AAFE0; color: #3AAFE0; }
+    .wk-lbl { font-size: 9px; font-weight: 700; color: #bbb; }
+    .wk-lbl.active { color: #3AAFE0; }
+    .wk-pts { font-size: 8px; color: #ccc; font-weight: 700; }
+    .wk-note { margin-top: 12px; font-size: 12px; color: #3AAFE0; font-weight: 700; background: #EBF7FD; padding: 8px 12px; border-radius: 10px; }
+
+    /* SKILLS */
+    .sk-r { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .sk-r:last-child { margin-bottom: 0; }
+    .sk-n { font-size: 12px; font-weight: 700; color: #2A1A2E; min-width: 100px; }
+    .sk-bar { flex: 1; height: 7px; background: #F5E8F0; border-radius: 4px; overflow: hidden; }
+    .sk-f { height: 100%; border-radius: 4px; }
+    .sk-p { font-size: 11px; font-weight: 700; min-width: 28px; text-align: right; }
+
+    .loading { text-align: center; padding: 60px; font-size: 24px; }
+
+    footer { background: #2A1A2E; padding: 20px 32px; text-align: center; font-size: 12px; color: #555; }
+    footer span { color: #F0A0C4; }
+
+    .taskbar { background: #F0D0E4; border-top: 2px solid #D4A0C0; padding: 7px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; bottom: 0; }
+    .tb-time { font-size: 12px; font-weight: 800; color: #2A1A2E; }
+    .tb-tabs { display: flex; gap: 6px; }
+    .tb-tab { background: #fff; border: 1px solid #D4A0C0; border-radius: 4px; padding: 5px 12px; font-size: 11px; font-weight: 700; color: #888; }
+
+    @media (max-width: 768px) {
+      .top-grid { grid-template-columns: 1fr; }
+      .modes-grid { grid-template-columns: 1fr; }
+      .bottom-grid { grid-template-columns: 1fr; }
+      nav { padding: 12px 16px; }
+      main { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loading" class="loading">loading your dashboard ✦</div>
+
+<div id="app" style="display:none;">
+  <nav>
+    <a href="index.html" class="logo">chir<span>rp</span></a>
+    <div class="nav-right">
+      <div class="nav-avatar" id="nav-avatar">🦋</div>
+      <span class="nav-name" id="nav-name">hey!</span>
+      <button class="logout-btn" onclick="logout()">log out</button>
+    </div>
+  </nav>
+
+  <main>
+
+    <div class="welcome">
+      <div class="welcome-left">
+        <h1 id="welcome-msg">hey there! ✦</h1>
+        <p id="welcome-sub">ready to practice today?</p>
+      </div>
+      <div class="welcome-avatar" id="welcome-avatar">🦋</div>
+    </div>
+
+    <div class="top-grid">
+      <div class="card">
+        <div class="card-label">daily streak</div>
+        <div class="streak-num" id="streak-num">0</div>
+        <div class="streak-sub">day streak 🔥</div>
+        <div class="dots-row" id="dots-row">
+          <div class="dot-wrap"><div class="dot today">★</div><span class="dot-lbl blue">today</span></div>
+        </div>
+      </div>
+
+      <div class="card xp-card">
+        <div class="card-label">your xp</div>
+        <div class="xp-num" id="xp-num">0</div>
+        <div class="xp-of">xp earned total</div>
+        <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+        <div class="xp-hint" id="xp-hint">complete today's challenge to earn xp!</div>
+      </div>
+
+      <div class="card challenge-card">
+        <div>
+          <div class="ch-chip">TODAY'S CHALLENGE · 2 MIN</div>
+          <div class="ch-q" id="todays-challenge">loading today's topic...</div>
+          <div class="ch-meta">⏱ 2 min · extempore · +80 xp</div>
+        </div>
+        <button class="ch-btn" onclick="window.location.href='practice.html'">🎙 start speaking</button>
+      </div>
+    </div>
+
+    <div class="sec-label">practice modes</div>
+    <div class="sec-title">what do you want to work on today? ✦</div>
+    <div class="modes-grid">
+      <a class="mode-card" href="practice.html">
+        <div class="mode-icon">🎙</div>
+        <div class="mode-name">speaking challenge</div>
+        <div class="mode-desc">timed prompts — extempore, storytelling, persuasion. record your response and track progress.</div>
+        <span class="mode-pill pink">daily drop</span>
+      </a>
+      <a class="mode-card" href="debate.html">
+        <div class="mode-icon">⚔️</div>
+        <div class="mode-name">debate with a friend</div>
+        <div class="mode-desc">pick a topic from 100+ curated debates, share a link with a friend and go head-to-head live.</div>
+        <span class="mode-pill blue">live rooms</span>
+      </a>
+      <a class="mode-card" href="interview.html">
+        <div class="mode-icon">💼</div>
+        <div class="mode-name">interview prep</div>
+        <div class="mode-desc">answer the most common HR and PI questions in 1–2 minutes. self-score your answers.</div>
+        <span class="mode-pill pink">timed practice</span>
+      </a>
+      <a class="mode-card" href="mun.html">
+        <div class="mode-icon">🌍</div>
+        <div class="mode-name">MUN simulation</div>
+        <div class="mode-desc">pick your country, committee and agenda. get your briefing card and join a live committee room.</div>
+        <span class="mode-pill blue">choose country</span>
+      </a>
+    </div>
+
+    <div class="bottom-grid">
+      <div class="card">
+        <div class="card-label">weekly streak</div>
+        <div class="card-title">this week</div>
+        <div class="wk-days" id="wk-days">
+          <div class="wk-d"><div class="wk-circle">M</div><span class="wk-lbl">mon</span></div>
+          <div class="wk-d"><div class="wk-circle">T</div><span class="wk-lbl">tue</span></div>
+          <div class="wk-d"><div class="wk-circle">W</div><span class="wk-lbl">wed</span></div>
+          <div class="wk-d"><div class="wk-circle">T</div><span class="wk-lbl">thu</span></div>
+          <div class="wk-d"><div class="wk-circle">F</div><span class="wk-lbl">fri</span></div>
+          <div class="wk-d"><div class="wk-circle">S</div><span class="wk-lbl">sat</span></div>
+          <div class="wk-d"><div class="wk-circle">S</div><span class="wk-lbl">sun</span></div>
+        </div>
+        <div class="wk-note" id="wk-note">complete today's challenge to start your streak! ✦</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">your skills</div>
+        <div class="card-title">communication journey</div>
+        <div class="sk-r"><span class="sk-n">argumentation</span><div class="sk-bar"><div class="sk-f" style="width:10%;background:#D63384;"></div></div><span class="sk-p" style="color:#D63384;">10%</span></div>
+        <div class="sk-r"><span class="sk-n">interview ready</span><div class="sk-bar"><div class="sk-f" style="width:5%;background:#3AAFE0;"></div></div><span class="sk-p" style="color:#3AAFE0;">5%</span></div>
+        <div class="sk-r"><span class="sk-n">GD confidence</span><div class="sk-bar"><div class="sk-f" style="width:5%;background:#D63384;"></div></div><span class="sk-p" style="color:#D63384;">5%</span></div>
+        <div class="sk-r"><span class="sk-n">spontaneous</span><div class="sk-bar"><div class="sk-f" style="width:0%;background:#3AAFE0;"></div></div><span class="sk-p" style="color:#3AAFE0;">0%</span></div>
+        <div class="sk-r"><span class="sk-n">MUN / debate</span><div class="sk-bar"><div class="sk-f" style="width:0%;background:#D63384;"></div></div><span class="sk-p" style="color:#D63384;">0%</span></div>
+        <div style="margin-top:12px;font-size:12px;color:#aaa;font-weight:600;">these grow as you practice each mode ✦</div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>© 2025 <span>chirrp</span> · your voice, your era</footer>
+
+  <div class="taskbar">
+    <div class="tb-tabs">
+      <div class="tb-tab">dashboard</div>
+      <div class="tb-tab">streak active 🔥</div>
+    </div>
+    <div class="tb-time" id="clock">--:-- --</div>
+  </div>
+</div>
+
+<script>
+  const { createClient } = supabase;
+  const sb = createClient(
+    'https://mkjhrlsxmakbnxqrrvlu.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ramhybHN4bWFrYm54cXJydmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNjcyNTMsImV4cCI6MjA5Njk0MzI1M30.fH_ZoJPYnNGwHX6gPELYIIApe9EzZt6SYlb8wPMeMtI'
+  );
+
+  // CLOCK
+  function updateClock() {
+    const now = new Date();
+    let h = now.getHours(), m = now.getMinutes().toString().padStart(2,'0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    document.getElementById('clock').textContent = h + ':' + m + ' ' + ampm;
+  }
+  updateClock(); setInterval(updateClock, 1000);
+
+  // TODAY'S CHALLENGE — you add topics here!
+  const challenges = [
+    "Is hustle culture doing more harm than good to Gen Z?",
+    "Should social media platforms be regulated by the government?",
+    "Is online education as effective as in-person learning?",
+    "Should voting be made mandatory for all citizens?",
+    "Does technology make us more or less creative?",
+    "Should gap years be encouraged for students?",
+    "Is cancel culture a necessary form of accountability?",
+    "Should fast fashion be banned?",
+    "Does social media do more harm than good to relationships?",
+    "Should coding be a mandatory subject in schools?",
+    "Is remote work the future or a temporary trend?",
+    "Should celebrities be held to higher moral standards?",
+    "Is ambition more important than talent?",
+    "Should uniforms be mandatory in colleges?",
+    "Does money buy happiness?",
+  ];
+  function getTodayChallenge() {
+    const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+    return challenges[dayOfYear % challenges.length];
+  }
+  document.getElementById('todays-challenge').textContent = `"${getTodayChallenge()}"`;
+
+  // LOAD PROFILE
+  async function loadDashboard() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'signup.html'; return; }
+
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+
+    if (!profile) { window.location.href = 'profile-setup.html'; return; }
+
+    // populate UI
+    document.getElementById('nav-name').textContent = profile.name || 'hey!';
+    document.getElementById('nav-avatar').textContent = profile.avatar || '🦋';
+    document.getElementById('welcome-avatar').textContent = profile.avatar || '🦋';
+    document.getElementById('welcome-msg').textContent = `hey ${profile.name?.split(' ')[0] || 'there'}! ✦`;
+
+    const xp = profile.xp || 0;
+    document.getElementById('xp-num').textContent = xp;
+    const pct = Math.min((xp % 1000) / 10, 100);
+    document.getElementById('xp-fill').style.width = pct + '%';
+    const toNext = 1000 - (xp % 1000);
+    document.getElementById('xp-hint').textContent = `${toNext} xp to next level ✦`;
+
+    const streak = profile.streak || 0;
+    document.getElementById('streak-num').textContent = streak;
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }
+
+  async function logout() {
+    await sb.auth.signOut();
+    window.location.href = 'index.html';
+  }
+
+  loadDashboard();
+</script>
+
+</body>
+</html>
