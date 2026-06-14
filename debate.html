@@ -6,193 +6,173 @@
   <title>Chirrp — debate room</title>
   <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/@daily-co/daily-js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Quicksand', sans-serif; background: #FEF0F5; color: #2A1A2E; min-height: 100vh; }
+    body { font-family: "Quicksand", sans-serif; background: #FEF0F5; color: #2A1A2E; min-height: 100vh; }
 
     nav {
       background: #fff; border-bottom: 2px solid #F0D0E4;
       padding: 14px 32px; display: flex; align-items: center;
       justify-content: space-between; position: sticky; top: 0; z-index: 100;
     }
-    .logo { font-family: 'Righteous', cursive; font-size: 26px; color: #D63384; text-decoration: none; }
+    .logo { font-family: "Righteous", cursive; font-size: 26px; color: #D63384; text-decoration: none; }
     .logo span { color: #3AAFE0; }
     .nav-back { font-size: 13px; font-weight: 700; color: #aaa; text-decoration: none; }
     .nav-back:hover { color: #D63384; }
 
     main { max-width: 860px; margin: 0 auto; padding: 32px 24px; }
 
-    /* ── LOBBY ── */
-    #lobby { }
+    /* LOBBY */
     .lobby-header { text-align: center; margin-bottom: 32px; }
     .lobby-eyebrow { font-size: 11px; font-weight: 700; color: #D63384; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
-    .lobby-title { font-family: 'Righteous', cursive; font-size: 36px; color: #2A1A2E; margin-bottom: 10px; }
+    .lobby-title { font-family: "Righteous", cursive; font-size: 36px; color: #2A1A2E; margin-bottom: 10px; }
     .lobby-sub { font-size: 14px; color: #aaa; line-height: 1.7; }
 
-    .lobby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
-
-    .panel {
-      background: #fff; border: 2px solid #F0D0E4; border-radius: 18px; padding: 28px 24px;
-    }
-    .panel-title { font-family: 'Righteous', cursive; font-size: 20px; color: #2A1A2E; margin-bottom: 6px; }
+    .lobby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .panel { background: #fff; border: 2px solid #F0D0E4; border-radius: 18px; padding: 28px 24px; }
+    .panel-title { font-family: "Righteous", cursive; font-size: 20px; color: #2A1A2E; margin-bottom: 6px; }
     .panel-sub { font-size: 13px; color: #aaa; margin-bottom: 20px; line-height: 1.6; }
 
     .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
     .form-group label { font-size: 12px; font-weight: 700; color: #2A1A2E; letter-spacing: 0.5px; }
     .form-group select, .form-group input {
       padding: 12px 14px; border: 2px solid #F0D0E4; border-radius: 12px;
-      font-size: 13px; font-family: 'Quicksand', sans-serif; font-weight: 500;
+      font-size: 13px; font-family: "Quicksand", sans-serif; font-weight: 500;
       color: #2A1A2E; background: #fff; outline: none; transition: border-color 0.2s;
     }
     .form-group select:focus, .form-group input:focus { border-color: #D63384; }
 
-    .btn-pink {
-      width: 100%; background: #D63384; color: #fff;
-      font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700;
-      padding: 13px; border-radius: 14px; border: none; cursor: pointer; transition: background 0.2s;
-    }
+    .btn-pink { width: 100%; background: #D63384; color: #fff; font-family: "Quicksand", sans-serif; font-size: 14px; font-weight: 700; padding: 13px; border-radius: 14px; border: none; cursor: pointer; transition: background 0.2s; }
     .btn-pink:hover { background: #c0226e; }
-    .btn-blue {
-      width: 100%; background: #3AAFE0; color: #fff;
-      font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700;
-      padding: 13px; border-radius: 14px; border: none; cursor: pointer; transition: background 0.2s;
-    }
+    .btn-pink:disabled { background: #F0A0C4; cursor: not-allowed; }
+    .btn-blue { width: 100%; background: #3AAFE0; color: #fff; font-family: "Quicksand", sans-serif; font-size: 14px; font-weight: 700; padding: 13px; border-radius: 14px; border: none; cursor: pointer; transition: background 0.2s; }
     .btn-blue:hover { background: #2290be; }
 
-    /* share link box */
     .share-box { display: none; background: #EBF7FD; border: 2px solid #B8E4F5; border-radius: 14px; padding: 16px; margin-top: 14px; }
     .share-box.show { display: block; }
     .share-label { font-size: 11px; font-weight: 700; color: #1A7FAA; letter-spacing: 1px; margin-bottom: 8px; }
     .share-link-row { display: flex; gap: 8px; }
-    .share-link-input {
-      flex: 1; padding: 10px 12px; border: 1.5px solid #B8E4F5; border-radius: 10px;
-      font-size: 12px; font-family: 'Quicksand', sans-serif; background: #fff; color: #2A1A2E;
-    }
-    .copy-btn {
-      background: #3AAFE0; color: #fff; border: none; border-radius: 10px;
-      padding: 10px 16px; font-size: 12px; font-weight: 700; cursor: pointer;
-      font-family: 'Quicksand', sans-serif; white-space: nowrap;
-    }
+    .share-link-input { flex: 1; padding: 10px 12px; border: 1.5px solid #B8E4F5; border-radius: 10px; font-size: 12px; font-family: "Quicksand", sans-serif; background: #fff; color: #2A1A2E; outline: none; }
+    .copy-btn { background: #3AAFE0; color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: "Quicksand", sans-serif; white-space: nowrap; }
     .share-note { font-size: 12px; color: #3AAFE0; margin-top: 8px; font-weight: 600; }
 
-    .topic-preview { background: #FEF0F5; border: 2px solid #F0D0E4; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
+    .topic-preview { background: #FEF0F5; border: 2px solid #F0D0E4; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; display: none; }
     .tp-label { font-size: 10px; font-weight: 700; color: #D63384; letter-spacing: 1px; margin-bottom: 4px; }
     .tp-text { font-size: 13px; font-weight: 700; color: #2A1A2E; line-height: 1.45; }
 
-    /* ── WAITING ── */
+    /* WAITING */
     #waiting { display: none; text-align: center; padding: 60px 20px; }
     .waiting-icon { font-size: 56px; margin-bottom: 16px; animation: pulse 2s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.1);} }
-    .waiting-title { font-family: 'Righteous', cursive; font-size: 26px; color: #2A1A2E; margin-bottom: 8px; }
+    .waiting-title { font-family: "Righteous", cursive; font-size: 26px; color: #2A1A2E; margin-bottom: 8px; }
     .waiting-sub { font-size: 14px; color: #aaa; margin-bottom: 24px; }
     .waiting-topic { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 16px 20px; max-width: 500px; margin: 0 auto 20px; }
     .wt-label { font-size: 10px; font-weight: 700; color: #D63384; letter-spacing: 1px; margin-bottom: 6px; }
-    .wt-topic { font-family: 'Righteous', cursive; font-size: 16px; color: #2A1A2E; line-height: 1.4; }
+    .wt-topic { font-family: "Righteous", cursive; font-size: 16px; color: #2A1A2E; line-height: 1.4; }
     .side-badge { display: inline-block; padding: 8px 20px; border-radius: 20px; font-size: 13px; font-weight: 700; margin-top: 12px; }
     .side-badge.for { background: #D63384; color: #fff; }
     .side-badge.against { background: #3AAFE0; color: #fff; }
+    .waiting-link-box { background: #EBF7FD; border: 2px solid #B8E4F5; border-radius: 14px; padding: 14px 16px; max-width: 460px; margin: 16px auto 0; }
 
-    /* ── DEBATE ROOM ── */
+    /* DEBATE ROOM */
     #room { display: none; }
 
-    .room-header {
-      background: #2A1A2E; border-radius: 16px; padding: 18px 24px;
-      display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
-    }
-    .rh-topic { font-family: 'Righteous', cursive; font-size: 15px; color: #fff; max-width: 480px; line-height: 1.4; }
+    .room-header { background: #2A1A2E; border-radius: 16px; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .rh-topic { font-family: "Righteous", cursive; font-size: 15px; color: #fff; max-width: 480px; line-height: 1.4; }
     .rh-round { text-align: right; }
     .rh-round-label { font-size: 10px; font-weight: 700; color: #F0A0C4; letter-spacing: 1px; }
-    .rh-round-name { font-family: 'Righteous', cursive; font-size: 16px; color: #fff; }
+    .rh-round-name { font-family: "Righteous", cursive; font-size: 15px; color: #fff; }
 
-    .players-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin-bottom: 20px; }
-    .player-card { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 14px 16px; }
-    .player-card.active { border-color: #D63384; box-shadow: 0 0 0 3px rgba(214,51,132,0.12); }
-    .player-card.active-blue { border-color: #3AAFE0; box-shadow: 0 0 0 3px rgba(58,175,224,0.12); }
-    .pc-side { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
-    .pc-side.for { color: #D63384; }
-    .pc-side.against { color: #3AAFE0; }
-    .pc-name { font-size: 14px; font-weight: 700; color: #2A1A2E; }
-    .pc-status { font-size: 11px; color: #aaa; margin-top: 2px; }
-    .vs { font-family: 'Righteous', cursive; font-size: 22px; color: #D63384; text-align: center; }
+    /* VOICE SECTION */
+    .voice-section { background: #fff; border: 2px solid #F0D0E4; border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+    .voice-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .voice-title { font-size: 13px; font-weight: 700; color: #2A1A2E; }
+    .voice-status { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 10px; background: #EBF7FD; color: #1A7FAA; }
+    .voice-status.live { background: #FEF0F5; color: #D63384; animation: blink 1.5s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
 
-    /* TIMER */
-    .timer-section { text-align: center; margin-bottom: 20px; }
-    .timer-ring { position: relative; display: inline-block; margin-bottom: 8px; }
-    .timer-display {
-      width: 100px; height: 100px; border-radius: 50%;
-      border: 5px solid #F0D0E4; background: #fff;
-      display: flex; align-items: center; justify-content: center;
-      flex-direction: column;
-    }
-    .timer-display.active-pink { border-color: #D63384; }
-    .timer-display.active-blue { border-color: #3AAFE0; }
-    .timer-num { font-family: 'Righteous', cursive; font-size: 28px; color: #2A1A2E; }
-    .timer-lbl { font-size: 10px; font-weight: 700; color: #aaa; }
-    .timer-status { font-size: 13px; font-weight: 700; color: #aaa; }
+    .players-voice { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .pv-card { border: 2px solid #F0D0E4; border-radius: 12px; padding: 14px; text-align: center; }
+    .pv-card.speaking { border-color: #D63384; background: #FEF0F5; box-shadow: 0 0 0 3px rgba(214,51,132,0.1); }
+    .pv-card.speaking-blue { border-color: #3AAFE0; background: #EBF7FD; box-shadow: 0 0 0 3px rgba(58,175,224,0.1); }
+    .pv-avatar { font-size: 32px; margin-bottom: 6px; }
+    .pv-name { font-size: 13px; font-weight: 700; color: #2A1A2E; margin-bottom: 4px; }
+    .pv-side { font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+    .pv-side.for { color: #D63384; }
+    .pv-side.against { color: #3AAFE0; }
+    .pv-mic { font-size: 20px; margin-top: 6px; }
 
-    /* ARGUMENT BOX */
-    .argument-section { margin-bottom: 20px; }
-    .arg-history { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; max-height: 280px; overflow-y: auto; padding-right: 4px; }
-    .arg-bubble {
-      background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 14px 16px;
-    }
-    .arg-bubble.for { border-color: #F0D0E4; }
-    .arg-bubble.against { border-color: #B8E4F5; background: #EBF7FD; }
-    .arg-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-    .arg-name { font-size: 11px; font-weight: 700; }
-    .arg-name.for { color: #D63384; }
-    .arg-name.against { color: #3AAFE0; }
-    .arg-round { font-size: 10px; color: #ccc; font-weight: 600; }
-    .arg-text { font-size: 13px; color: #2A1A2E; line-height: 1.65; }
+    .voice-controls { display: flex; gap: 10px; }
+    .vc-btn { flex: 1; padding: 11px; border-radius: 12px; border: 2px solid #F0D0E4; background: #fff; font-family: "Quicksand", sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .vc-btn.mute { background: #FEF0F5; border-color: #D63384; color: #D63384; }
+    .vc-btn.mute:hover { background: #D63384; color: #fff; }
+    .vc-btn.unmute { background: #D63384; color: #fff; border-color: #D63384; }
+    .vc-btn.leave { background: #2A1A2E; color: #fff; border-color: #2A1A2E; }
 
-    .input-area { display: flex; gap: 10px; align-items: flex-end; }
-    .arg-input {
-      flex: 1; padding: 13px 16px; border: 2px solid #F0D0E4; border-radius: 14px;
-      font-size: 13px; font-family: 'Quicksand', sans-serif; font-weight: 500;
-      resize: none; outline: none; transition: border-color 0.2s; height: 80px;
-      color: #2A1A2E;
-    }
-    .arg-input:focus { border-color: #D63384; }
-    .arg-input:disabled { background: #FEF8FB; color: #aaa; }
-    .submit-arg {
-      background: #D63384; color: #fff; border: none; border-radius: 14px;
-      padding: 13px 20px; font-size: 13px; font-weight: 700; cursor: pointer;
-      font-family: 'Quicksand', sans-serif; transition: background 0.2s; white-space: nowrap;
-    }
-    .submit-arg:hover { background: #c0226e; }
-    .submit-arg:disabled { background: #F0A0C4; cursor: not-allowed; }
-    .your-turn-note { font-size: 12px; font-weight: 700; text-align: center; padding: 8px; border-radius: 10px; margin-bottom: 10px; }
-    .your-turn-note.active { background: #FEF0F5; color: #D63384; }
-    .your-turn-note.waiting { background: #F5F5F5; color: #aaa; }
-
-    /* ROUNDS PROGRESS */
+    /* ROUNDS */
     .rounds-bar { display: flex; gap: 6px; margin-bottom: 20px; }
     .round-pip { flex: 1; height: 6px; border-radius: 3px; background: #F0D0E4; transition: background 0.3s; }
     .round-pip.done { background: #D63384; }
     .round-pip.active { background: #3AAFE0; }
 
-    /* END SCREEN */
+    /* TIMER */
+    .timer-section { text-align: center; margin-bottom: 20px; }
+    .timer-display { width: 100px; height: 100px; border-radius: 50%; border: 5px solid #F0D0E4; background: #fff; display: flex; align-items: center; justify-content: center; flex-direction: column; margin: 0 auto 8px; }
+    .timer-display.active-pink { border-color: #D63384; }
+    .timer-display.active-blue { border-color: #3AAFE0; }
+    .timer-num { font-family: "Righteous", cursive; font-size: 28px; color: #2A1A2E; }
+    .timer-lbl { font-size: 10px; font-weight: 700; color: #aaa; }
+    .timer-status { font-size: 13px; font-weight: 700; color: #aaa; }
+
+    /* ROUND INFO */
+    .round-info { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+    .ri-left .ri-label { font-size: 10px; font-weight: 700; color: #D63384; letter-spacing: 1px; margin-bottom: 4px; }
+    .ri-left .ri-name { font-family: "Righteous", cursive; font-size: 18px; color: #2A1A2E; }
+    .ri-right { text-align: right; }
+    .your-turn-badge { display: inline-block; padding: 6px 14px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+    .your-turn-badge.active { background: #D63384; color: #fff; }
+    .your-turn-badge.waiting { background: #F5F5F5; color: #aaa; }
+
+    /* TRANSCRIPT */
+    .transcript-section { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 16px; margin-bottom: 20px; }
+    .ts-title { font-size: 12px; font-weight: 700; color: #D63384; letter-spacing: 1px; margin-bottom: 12px; }
+    .ts-history { display: flex; flex-direction: column; gap: 10px; max-height: 220px; overflow-y: auto; }
+    .ts-entry { border-radius: 10px; padding: 10px 14px; }
+    .ts-entry.for { background: #FEF0F5; border-left: 3px solid #D63384; }
+    .ts-entry.against { background: #EBF7FD; border-left: 3px solid #3AAFE0; }
+    .ts-meta { font-size: 10px; font-weight: 700; margin-bottom: 3px; }
+    .ts-meta.for { color: #D63384; }
+    .ts-meta.against { color: #3AAFE0; }
+    .ts-text { font-size: 12px; color: #555; }
+
+    /* NEXT ROUND BTN */
+    .next-round-btn { width: 100%; background: #D63384; color: #fff; font-family: "Quicksand", sans-serif; font-size: 14px; font-weight: 700; padding: 14px; border-radius: 14px; border: none; cursor: pointer; display: none; margin-bottom: 16px; }
+    .next-round-btn:hover { background: #c0226e; }
+
+    /* END */
     #end-screen { display: none; text-align: center; padding: 40px 20px; }
-    .end-title { font-family: 'Righteous', cursive; font-size: 32px; color: #2A1A2E; margin-bottom: 8px; }
+    .end-title { font-family: "Righteous", cursive; font-size: 32px; color: #2A1A2E; margin-bottom: 8px; }
     .end-sub { font-size: 14px; color: #aaa; margin-bottom: 32px; }
-    .end-recap { background: #fff; border: 2px solid #F0D0E4; border-radius: 18px; padding: 24px; max-width: 500px; margin: 0 auto 24px; text-align: left; }
+    .end-recap { background: #fff; border: 2px solid #F0D0E4; border-radius: 18px; padding: 24px; max-width: 480px; margin: 0 auto 24px; text-align: left; }
     .er-title { font-size: 12px; font-weight: 700; color: #D63384; letter-spacing: 1px; margin-bottom: 14px; }
     .er-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #F0D0E4; font-size: 13px; }
     .er-row:last-child { border-bottom: none; }
     .er-key { font-weight: 600; color: #888; }
     .er-val { font-weight: 700; color: #2A1A2E; }
-    .end-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-    .btn-home { background: #D63384; color: #fff; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; padding: 12px 28px; border-radius: 20px; border: none; cursor: pointer; }
-    .btn-again { background: transparent; color: #D63384; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; padding: 12px 28px; border-radius: 20px; border: 2px solid #D63384; cursor: pointer; }
+    .end-btns { display: flex; gap: 12px; justify-content: center; }
+    .btn-home { background: #D63384; color: #fff; font-family: "Quicksand", sans-serif; font-size: 14px; font-weight: 700; padding: 12px 28px; border-radius: 20px; border: none; cursor: pointer; }
+    .btn-again { background: transparent; color: #D63384; font-family: "Quicksand", sans-serif; font-size: 14px; font-weight: 700; padding: 12px 28px; border-radius: 20px; border: 2px solid #D63384; cursor: pointer; }
 
     .msg { padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-bottom: 12px; display: none; }
     .msg.error { background: #FEE8F0; color: #c0226e; border: 1.5px solid #F0A0C4; display: block; }
     .msg.info { background: #EBF7FD; color: #1A7FAA; border: 1.5px solid #B8E4F5; display: block; }
 
+    #daily-container { display: none; }
+
     @media (max-width: 640px) {
       .lobby-grid { grid-template-columns: 1fr; }
-      .players-row { grid-template-columns: 1fr; }
-      .vs { display: none; }
+      .players-voice { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -210,31 +190,28 @@
     <div class="lobby-header">
       <div class="lobby-eyebrow">debate mode</div>
       <h1 class="lobby-title">ready to argue? ✦</h1>
-      <p class="lobby-sub">pick a topic, create a room, share the link with a friend.<br>you each get a timer — make your case.</p>
+      <p class="lobby-sub">pick a topic, create a room, share the link with a friend.<br>voice debate — you speak, they respond. timed rounds, real arguments.</p>
     </div>
 
     <div id="msg-lobby" class="msg"></div>
 
     <div class="lobby-grid">
-      <!-- CREATE -->
       <div class="panel">
         <div class="panel-title">create a room</div>
-        <div class="panel-sub">pick a topic and start a debate. share the link with whoever you want to debate.</div>
+        <div class="panel-sub">pick a topic and start a voice debate. share the link with whoever you want to debate.</div>
         <div class="form-group">
           <label>CHOOSE A TOPIC</label>
-          <select id="topic-select">
-            <option value="">— pick a topic —</option>
-          </select>
+          <select id="topic-select"><option value="">— pick a topic —</option></select>
         </div>
-        <div class="topic-preview" id="topic-preview" style="display:none;">
+        <div class="topic-preview" id="topic-preview">
           <div class="tp-label">SELECTED TOPIC</div>
           <div class="tp-text" id="preview-text"></div>
         </div>
         <div class="form-group">
-          <label>YOUR NAME IN THE ROOM</label>
+          <label>YOUR NAME</label>
           <input type="text" id="creator-name" placeholder="your name" />
         </div>
-        <button class="btn-pink" onclick="createRoom()">create room & get link ✦</button>
+        <button class="btn-pink" id="create-btn" onclick="createRoom()">create room & get link ✦</button>
         <div class="share-box" id="share-box">
           <div class="share-label">SHARE THIS LINK WITH YOUR OPPONENT</div>
           <div class="share-link-row">
@@ -245,27 +222,25 @@
         </div>
       </div>
 
-      <!-- JOIN -->
       <div class="panel">
         <div class="panel-title">join a room</div>
         <div class="panel-sub">got a link from a friend? paste the room code here and jump in.</div>
         <div class="form-group">
           <label>ROOM CODE</label>
-          <input type="text" id="join-code" placeholder="paste room code here" />
+          <input type="text" id="join-code" placeholder="paste room code or full link" />
         </div>
         <div class="form-group">
-          <label>YOUR NAME IN THE ROOM</label>
+          <label>YOUR NAME</label>
           <input type="text" id="joiner-name" placeholder="your name" />
         </div>
         <button class="btn-blue" onclick="joinRoom()">join debate ✦</button>
       </div>
     </div>
 
-    <!-- TOPIC LIST PREVIEW -->
     <div class="panel">
-      <div class="panel-title">100+ debate topics ✦</div>
-      <div class="panel-sub">from tech and society to politics, ethics, and culture. new topics added regularly.</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;" id="topic-tags"></div>
+      <div class="panel-title">debate topics ✦</div>
+      <div class="panel-sub">click any topic to select it above.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;" id="topic-tags"></div>
     </div>
   </div>
 
@@ -273,16 +248,16 @@
   <div id="waiting">
     <div class="waiting-icon">⏳</div>
     <div class="waiting-title">waiting for your opponent...</div>
-    <div class="waiting-sub">share the link below — they'll join and the debate starts automatically</div>
+    <div class="waiting-sub">share the link — the debate starts the moment they join</div>
     <div class="waiting-topic">
       <div class="wt-label">TOPIC</div>
       <div class="wt-topic" id="waiting-topic-text"></div>
     </div>
     <div id="waiting-side"></div>
-    <div style="margin-top:16px;">
-      <div class="share-label" style="color:#1A7FAA;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:8px;">ROOM LINK</div>
-      <div class="share-link-row" style="max-width:460px;margin:0 auto;">
-        <input class="share-link-input" id="waiting-link" readonly style="border:1.5px solid #B8E4F5;background:#EBF7FD;" />
+    <div class="waiting-link-box">
+      <div class="share-label">ROOM LINK</div>
+      <div class="share-link-row">
+        <input class="share-link-input" id="waiting-link" readonly />
         <button class="copy-btn" onclick="copyWaitingLink()">copy</button>
       </div>
     </div>
@@ -293,8 +268,8 @@
     <div class="room-header">
       <div class="rh-topic" id="room-topic-text"></div>
       <div class="rh-round">
-        <div class="rh-round-label">CURRENT ROUND</div>
-        <div class="rh-round-name" id="round-name">Round 1</div>
+        <div class="rh-round-label">ROUND</div>
+        <div class="rh-round-name" id="round-name">1 of 5</div>
       </div>
     </div>
 
@@ -306,36 +281,63 @@
       <div class="round-pip"></div>
     </div>
 
-    <div class="players-row">
-      <div class="player-card" id="player-for-card">
-        <div class="pc-side for">FOR ✦</div>
-        <div class="pc-name" id="player-for-name">—</div>
-        <div class="pc-status" id="player-for-status">waiting...</div>
+    <!-- VOICE -->
+    <div class="voice-section">
+      <div class="voice-top">
+        <div class="voice-title">🎙 live voice call</div>
+        <div class="voice-status live" id="voice-status">● connecting...</div>
       </div>
-      <div class="vs">VS</div>
-      <div class="player-card" id="player-against-card">
-        <div class="pc-side against">AGAINST ✦</div>
-        <div class="pc-name" id="player-against-name">—</div>
-        <div class="pc-status" id="player-against-status">waiting...</div>
+      <div class="players-voice">
+        <div class="pv-card" id="pv-for">
+          <div class="pv-avatar" id="pv-for-avatar">🦋</div>
+          <div class="pv-name" id="pv-for-name">—</div>
+          <div class="pv-side for">FOR</div>
+          <div class="pv-mic" id="pv-for-mic">🎙</div>
+        </div>
+        <div class="pv-card" id="pv-against">
+          <div class="pv-avatar" id="pv-against-avatar">⚡</div>
+          <div class="pv-name" id="pv-against-name">—</div>
+          <div class="pv-side against">AGAINST</div>
+          <div class="pv-mic" id="pv-against-mic">🔇</div>
+        </div>
+      </div>
+      <div class="voice-controls">
+        <button class="vc-btn mute" id="mute-btn" onclick="toggleMute()">🎙 mute mic</button>
+        <button class="vc-btn leave" onclick="leaveCall()">leave call</button>
+      </div>
+    </div>
+
+    <!-- hidden daily iframe -->
+    <div id="daily-container"></div>
+
+    <!-- ROUND INFO + TIMER -->
+    <div class="round-info">
+      <div class="ri-left">
+        <div class="ri-label">CURRENT ROUND</div>
+        <div class="ri-name" id="ri-name">Opening Statement</div>
+      </div>
+      <div class="ri-right">
+        <span class="your-turn-badge waiting" id="turn-badge">waiting...</span>
       </div>
     </div>
 
     <div class="timer-section">
-      <div class="timer-ring">
-        <div class="timer-display" id="timer-display">
-          <div class="timer-num" id="timer-num">3:00</div>
-          <div class="timer-lbl">remaining</div>
-        </div>
+      <div class="timer-display" id="timer-display">
+        <div class="timer-num" id="timer-num">3:00</div>
+        <div class="timer-lbl">remaining</div>
       </div>
       <div class="timer-status" id="timer-status">get ready...</div>
     </div>
 
-    <div class="argument-section">
-      <div class="arg-history" id="arg-history"></div>
-      <div class="your-turn-note" id="turn-note">waiting for the debate to start...</div>
-      <div class="input-area">
-        <textarea class="arg-input" id="arg-input" placeholder="type your argument here..." disabled></textarea>
-        <button class="submit-arg" id="submit-arg" onclick="submitArgument()" disabled>submit ✦</button>
+    <button class="next-round-btn" id="next-round-btn" onclick="advanceRound()">
+      done speaking — next round →
+    </button>
+
+    <!-- ROUND LOG -->
+    <div class="transcript-section">
+      <div class="ts-title">ROUND LOG</div>
+      <div class="ts-history" id="ts-history">
+        <div style="font-size:13px;color:#ccc;text-align:center;padding:12px;">rounds will appear here as you progress...</div>
       </div>
     </div>
   </div>
@@ -344,7 +346,7 @@
   <div id="end-screen">
     <div style="font-size:52px;margin-bottom:16px;">🎉</div>
     <div class="end-title">debate complete! ✦</div>
-    <div class="end-sub">great job making your case. here's how it went:</div>
+    <div class="end-sub">great job making your case!</div>
     <div class="end-recap">
       <div class="er-title">DEBATE RECAP</div>
       <div class="er-row"><span class="er-key">topic</span><span class="er-val" id="recap-topic" style="max-width:260px;text-align:right;font-size:12px;"></span></div>
@@ -363,11 +365,10 @@
 <script>
   const { createClient } = supabase;
   const sb = createClient(
-    'https://mkjhrlsxmakbnxqrrvlu.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ramhybHN4bWFrYm54cXJydmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNjcyNTMsImV4cCI6MjA5Njk0MzI1M30.fH_ZoJPYnNGwHX6gPELYIIApe9EzZt6SYlb8wPMeMtI'
+    "https://mkjhrlsxmakbnxqrrvlu.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ramhybHN4bWFrYm54cXJydmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNjcyNTMsImV4cCI6MjA5Njk0MzI1M30.fH_ZoJPYnNGwHX6gPELYIIApe9EzZt6SYlb8wPMeMtI"
   );
 
-  // ── TOPICS ──
   const topics = [
     "Social media does more harm than good to society",
     "Artificial intelligence will take more jobs than it creates",
@@ -401,207 +402,310 @@
     "The internet has done more good than harm",
   ];
 
-  // populate select and tag cloud
-  const sel = document.getElementById('topic-select');
-  const tagCloud = document.getElementById('topic-tags');
+  const rounds = [
+    { name: "Opening Statement — FOR speaks", speaker: "for",     time: 180 },
+    { name: "Opening Statement — AGAINST speaks", speaker: "against", time: 180 },
+    { name: "Rebuttal — FOR speaks",          speaker: "for",     time: 120 },
+    { name: "Rebuttal — AGAINST speaks",      speaker: "against", time: 120 },
+    { name: "Closing Statement — FOR speaks", speaker: "for",     time: 60  },
+  ];
+
+  // populate topic select + tag cloud
+  const sel = document.getElementById("topic-select");
+  const tagCloud = document.getElementById("topic-tags");
   topics.forEach((t, i) => {
-    const opt = document.createElement('option');
+    const opt = document.createElement("option");
     opt.value = i; opt.textContent = t;
     sel.appendChild(opt);
-    const tag = document.createElement('span');
+    const tag = document.createElement("span");
     tag.textContent = t;
-    tag.style.cssText = 'font-size:11px;font-weight:600;color:#888;background:#fff;border:1.5px solid #F0D0E4;border-radius:12px;padding:4px 12px;cursor:pointer;';
-    tag.onclick = () => { sel.value = i; sel.dispatchEvent(new Event('change')); };
+    tag.style.cssText = "font-size:11px;font-weight:600;color:#888;background:#fff;border:1.5px solid #F0D0E4;border-radius:12px;padding:4px 12px;cursor:pointer;transition:all 0.15s;";
+    tag.onmouseover = () => { tag.style.borderColor = "#D63384"; tag.style.color = "#D63384"; };
+    tag.onmouseout = () => { tag.style.borderColor = "#F0D0E4"; tag.style.color = "#888"; };
+    tag.onclick = () => {
+      sel.value = i; sel.dispatchEvent(new Event("change"));
+      tag.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    };
     tagCloud.appendChild(tag);
   });
 
-  sel.addEventListener('change', () => {
+  sel.addEventListener("change", () => {
     const v = sel.value;
-    if (v === '') { document.getElementById('topic-preview').style.display = 'none'; return; }
-    document.getElementById('preview-text').textContent = `"${topics[v]}"`;
-    document.getElementById('topic-preview').style.display = 'block';
+    const preview = document.getElementById("topic-preview");
+    if (v === "") { preview.style.display = "none"; return; }
+    document.getElementById("preview-text").textContent = topics[v];
+    preview.style.display = "block";
   });
 
-  // ── STATE ──
-  let roomCode = null, mySide = null, myName = null, currentRound = 0, timerInterval = null;
-  let roomChannel = null;
-  const rounds = [
-    { name: 'Opening — FOR speaks', speaker: 'for', time: 180 },
-    { name: 'Opening — AGAINST speaks', speaker: 'against', time: 180 },
-    { name: 'Rebuttal — FOR speaks', speaker: 'for', time: 120 },
-    { name: 'Rebuttal — AGAINST speaks', speaker: 'against', time: 120 },
-    { name: 'Closing — FOR speaks', speaker: 'for', time: 60 },
-  ];
+  // STATE
+  let roomCode = null, mySide = null, myName = null;
+  let currentRound = 0, timerInterval = null;
+  let callFrame = null, isMuted = false;
+  let roomEntered = false, pollInterval = null;
+  const seenGlobal = new Set();
 
   function showMsg(id, text, type) {
     const el = document.getElementById(id);
-    el.textContent = text; el.className = `msg ${type}`;
+    el.textContent = text; el.className = "msg " + type;
   }
 
   function genCode() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
   }
 
-  // ── CREATE ROOM ──
+  // CREATE ROOM
   async function createRoom() {
-    const topicIdx = document.getElementById('topic-select').value;
-    const name = document.getElementById('creator-name').value.trim();
-    if (topicIdx === '') { showMsg('msg-lobby', 'please pick a topic!', 'error'); return; }
-    if (!name) { showMsg('msg-lobby', 'please enter your name!', 'error'); return; }
+    const topicIdx = sel.value;
+    const name = document.getElementById("creator-name").value.trim();
+    if (topicIdx === "") { showMsg("msg-lobby", "please pick a topic!", "error"); return; }
+    if (!name) { showMsg("msg-lobby", "please enter your name!", "error"); return; }
+
+    const btn = document.getElementById("create-btn");
+    btn.disabled = true; btn.textContent = "creating room...";
 
     roomCode = genCode();
     myName = name;
-    mySide = 'for';
+    mySide = "for";
 
-    // save room to Supabase
-    await sb.from('debate_rooms').upsert({
+    // create Daily.co room via our Vercel function
+    let dailyUrl = null;
+    try {
+      const res = await fetch("/api/create-room", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomName: "chirrp-" + roomCode.toLowerCase() })
+      });
+      const data = await res.json();
+      if (data.url) dailyUrl = data.url;
+    } catch(e) {
+      console.warn("Daily room creation failed, continuing without voice:", e);
+    }
+
+    await sb.from("debate_rooms").upsert({
       code: roomCode,
       topic: topics[topicIdx],
       topic_idx: parseInt(topicIdx),
       creator_name: name,
-      status: 'waiting',
+      daily_url: dailyUrl,
+      status: "waiting",
       created_at: new Date().toISOString()
     });
 
-    const link = `${window.location.origin}/debate.html?room=${roomCode}`;
-    document.getElementById('share-link').value = link;
-    document.getElementById('share-box').classList.add('show');
+    const link = window.location.origin + "/debate.html?room=" + roomCode;
+    document.getElementById("share-link").value = link;
+    document.getElementById("share-box").classList.add("show");
+    btn.disabled = false; btn.textContent = "create room & get link ✦";
 
-    // show waiting
-    document.getElementById('lobby').style.display = 'none';
-    document.getElementById('waiting').style.display = 'block';
-    document.getElementById('waiting-topic-text').textContent = `"${topics[topicIdx]}"`;
-    document.getElementById('waiting-link').value = link;
-    document.getElementById('waiting-side').innerHTML = `<span class="side-badge for">you are arguing FOR ✦</span>`;
+    document.getElementById("lobby").style.display = "none";
+    document.getElementById("waiting").style.display = "block";
+    document.getElementById("waiting-topic-text").textContent = topics[topicIdx];
+    document.getElementById("waiting-link").value = link;
+    document.getElementById("waiting-side").innerHTML = "<span class=\"side-badge for\">you are arguing FOR ✦</span>";
 
     subscribeToRoom(roomCode);
   }
 
-  // ── JOIN ROOM ──
+  // JOIN ROOM
   async function joinRoom() {
-    let code = document.getElementById('join-code').value.trim().toUpperCase();
-    const name = document.getElementById('joiner-name').value.trim();
+    let code = document.getElementById("join-code").value.trim().toUpperCase();
+    const name = document.getElementById("joiner-name").value.trim();
+    if (code.includes("ROOM=")) code = new URLSearchParams(code.split("?")[1]).get("ROOM");
+    if (!code) { showMsg("msg-lobby", "please paste a room code or link!", "error"); return; }
+    if (!name) { showMsg("msg-lobby", "please enter your name!", "error"); return; }
 
-    // support full URL paste
-    if (code.includes('room=')) code = new URL(code).searchParams.get('room').toUpperCase();
+    const { data: room, error } = await sb.from("debate_rooms").select("*").eq("code", code).single();
+    if (error || !room) { showMsg("msg-lobby", "room not found! check the code.", "error"); return; }
+    if (room.status !== "waiting") { showMsg("msg-lobby", "this room has already started or ended!", "error"); return; }
 
-    if (!code) { showMsg('msg-lobby', 'please paste a room code or link!', 'error'); return; }
-    if (!name) { showMsg('msg-lobby', 'please enter your name!', 'error'); return; }
+    roomCode = code; myName = name; mySide = "against";
+    await sb.from("debate_rooms").update({ joiner_name: name, status: "active" }).eq("code", code);
 
-    const { data: room, error } = await sb.from('debate_rooms').select('*').eq('code', code).single();
-    if (error || !room) { showMsg('msg-lobby', 'room not found! check the code and try again.', 'error'); return; }
-    if (room.status !== 'waiting') { showMsg('msg-lobby', 'this room has already started or ended!', 'error'); return; }
-
-    roomCode = code; myName = name; mySide = 'against';
-
-    await sb.from('debate_rooms').update({ joiner_name: name, status: 'active' }).eq('code', code);
-
-    document.getElementById('lobby').style.display = 'none';
-    enterRoom(room.topic, room.creator_name, name);
+    document.getElementById("lobby").style.display = "none";
+    enterRoom(room.topic, room.creator_name, name, room.daily_url);
   }
 
-  // ── SUBSCRIBE TO ROOM ──
+  // SUBSCRIBE (realtime + poll)
   function subscribeToRoom(code) {
-    roomChannel = sb.channel(`room-${code}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'debate_rooms', filter: `code=eq.${code}` }, (payload) => {
-        if (payload.new.status === 'active') {
-          document.getElementById('waiting').style.display = 'none';
-          enterRoom(payload.new.topic, payload.new.creator_name, payload.new.joiner_name);
+    sb.channel("room-" + code)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "debate_rooms", filter: "code=eq." + code }, (payload) => {
+        if (payload.new.status === "active" && !roomEntered) {
+          roomEntered = true;
+          clearInterval(pollInterval);
+          document.getElementById("waiting").style.display = "none";
+          enterRoom(payload.new.topic, payload.new.creator_name, payload.new.joiner_name, payload.new.daily_url);
         }
-      })
-      .subscribe();
+      }).subscribe();
+
+    pollInterval = setInterval(async () => {
+      if (roomEntered) { clearInterval(pollInterval); return; }
+      const { data: room } = await sb.from("debate_rooms").select("*").eq("code", code).single();
+      if (room && room.status === "active") {
+        roomEntered = true;
+        clearInterval(pollInterval);
+        document.getElementById("waiting").style.display = "none";
+        enterRoom(room.topic, room.creator_name, room.joiner_name, room.daily_url);
+      }
+    }, 2000);
   }
 
-  // ── ENTER ROOM ──
-  function enterRoom(topic, forName, againstName) {
-    document.getElementById('room').style.display = 'block';
-    document.getElementById('room-topic-text').textContent = `"${topic}"`;
-    document.getElementById('player-for-name').textContent = forName;
-    document.getElementById('player-against-name').textContent = againstName;
-    document.getElementById('recap-topic').textContent = topic;
-    document.getElementById('recap-side').textContent = mySide === 'for' ? 'FOR' : 'AGAINST';
+  // ENTER ROOM
+  function enterRoom(topic, forName, againstName, dailyUrl) {
+    document.getElementById("room").style.display = "block";
+    document.getElementById("room-topic-text").textContent = "\"" + topic + "\"";
+    document.getElementById("pv-for-name").textContent = forName;
+    document.getElementById("pv-against-name").textContent = againstName;
+    document.getElementById("recap-topic").textContent = topic;
+    document.getElementById("recap-side").textContent = mySide === "for" ? "FOR" : "AGAINST";
 
-    // subscribe to arguments
-    sb.channel(`args-${roomCode}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'debate_args', filter: `room_code=eq.${roomCode}` }, (payload) => {
-        addBubble(payload.new);
-        if (payload.new.round === currentRound && payload.new.side !== mySide) {
-          clearInterval(timerInterval);
-          if (currentRound < rounds.length - 1) {
-            currentRound++;
-            setTimeout(() => startRound(currentRound), 1500);
-          } else {
-            endDebate();
-          }
-        }
-      })
-      .subscribe();
+    // join Daily.co voice call
+    if (dailyUrl) {
+      joinDailyCall(dailyUrl);
+    } else {
+      document.getElementById("voice-status").textContent = "voice unavailable";
+      document.getElementById("voice-status").style.background = "#F5F5F5";
+      document.getElementById("voice-status").style.color = "#aaa";
+    }
+
+    // poll for round state changes
+    setInterval(async () => {
+      const { data: room } = await sb.from("debate_rooms").select("current_round,ended").eq("code", roomCode).single();
+      if (!room) return;
+      if (room.ended && document.getElementById("room").style.display !== "none") {
+        endDebate();
+      } else if (room.current_round !== undefined && room.current_round !== currentRound) {
+        currentRound = room.current_round;
+        startRound(currentRound);
+      }
+    }, 2000);
 
     startRound(0);
   }
 
-  // ── ROUNDS ──
+  // DAILY.CO VOICE
+  function joinDailyCall(url) {
+    try {
+      callFrame = window.DailyIframe.createFrame(
+        document.getElementById("daily-container"),
+        {
+          iframeStyle: { display: "none" },
+          showLeaveButton: false,
+          showFullscreenButton: false,
+        }
+      );
+
+      callFrame.on("joined-meeting", () => {
+        document.getElementById("voice-status").textContent = "● live";
+        document.getElementById("voice-status").className = "voice-status live";
+      });
+
+      callFrame.on("participant-joined", (e) => {
+        document.getElementById("voice-status").textContent = "● both connected";
+      });
+
+      callFrame.on("participant-left", () => {
+        document.getElementById("voice-status").textContent = "● opponent left";
+        document.getElementById("voice-status").className = "voice-status";
+      });
+
+      callFrame.on("error", (e) => {
+        console.warn("Daily error:", e);
+        document.getElementById("voice-status").textContent = "voice error";
+      });
+
+      callFrame.join({ url, userName: myName });
+    } catch(e) {
+      console.warn("Daily.co failed to load:", e);
+    }
+  }
+
+  function toggleMute() {
+    if (!callFrame) return;
+    isMuted = !isMuted;
+    callFrame.setLocalAudio(!isMuted);
+    const btn = document.getElementById("mute-btn");
+    if (isMuted) {
+      btn.textContent = "🔇 unmute mic";
+      btn.className = "vc-btn unmute";
+    } else {
+      btn.textContent = "🎙 mute mic";
+      btn.className = "vc-btn mute";
+    }
+    // update mic icon
+    const micId = mySide === "for" ? "pv-for-mic" : "pv-against-mic";
+    document.getElementById(micId).textContent = isMuted ? "🔇" : "🎙";
+  }
+
+  function leaveCall() {
+    if (callFrame) callFrame.leave();
+    endDebate();
+  }
+
+  // ROUNDS
   function startRound(idx) {
     currentRound = idx;
     const round = rounds[idx];
-    document.getElementById('round-name').textContent = round.name;
+    document.getElementById("round-name").textContent = (idx + 1) + " of " + rounds.length;
+    document.getElementById("ri-name").textContent = round.name;
 
-    // update pips
-    document.querySelectorAll('.round-pip').forEach((p, i) => {
-      p.className = 'round-pip' + (i < idx ? ' done' : i === idx ? ' active' : '');
+    document.querySelectorAll(".round-pip").forEach((p, i) => {
+      p.className = "round-pip" + (i < idx ? " done" : i === idx ? " active" : "");
     });
 
     const isMyTurn = round.speaker === mySide;
-    const forCard = document.getElementById('player-for-card');
-    const againstCard = document.getElementById('player-against-card');
-    forCard.className = 'player-card' + (round.speaker === 'for' ? ' active' : '');
-    againstCard.className = 'player-card' + (round.speaker === 'against' ? ' active-blue' : '');
+    const badge = document.getElementById("turn-badge");
+    const nextBtn = document.getElementById("next-round-btn");
 
-    document.getElementById('player-for-status').textContent = round.speaker === 'for' ? '🎙 speaking now' : 'listening...';
-    document.getElementById('player-against-status').textContent = round.speaker === 'against' ? '🎙 speaking now' : 'listening...';
-
-    const input = document.getElementById('arg-input');
-    const btn = document.getElementById('submit-arg');
-    const note = document.getElementById('turn-note');
+    // highlight speaking player card
+    document.getElementById("pv-for").className = "pv-card" + (round.speaker === "for" ? " speaking" : "");
+    document.getElementById("pv-against").className = "pv-card" + (round.speaker === "against" ? " speaking-blue" : "");
+    document.getElementById("pv-for-mic").textContent = round.speaker === "for" ? "🎙" : "🔇";
+    document.getElementById("pv-against-mic").textContent = round.speaker === "against" ? "🎙" : "🔇";
 
     if (isMyTurn) {
-      input.disabled = false; btn.disabled = false;
-      input.placeholder = 'make your case — be clear, confident, and concise...';
-      note.textContent = '✦ it\'s your turn! type your argument and submit before time runs out';
-      note.className = 'your-turn-note active';
+      badge.textContent = "✦ your turn to speak!";
+      badge.className = "your-turn-badge active";
+      nextBtn.style.display = "block";
+      nextBtn.textContent = idx < rounds.length - 1 ? "done speaking — next round →" : "done speaking — finish debate ✦";
+      // auto-unmute when it's your turn
+      if (callFrame && isMuted) toggleMute();
     } else {
-      input.disabled = true; btn.disabled = true;
-      input.placeholder = 'waiting for your opponent to speak...';
-      note.textContent = 'your opponent is speaking — listen carefully, prepare your response';
-      note.className = 'your-turn-note waiting';
+      badge.textContent = "listen carefully ⏳";
+      badge.className = "your-turn-badge waiting";
+      nextBtn.style.display = "none";
+      // auto-mute when it's not your turn (optional, keeps it clean)
+      if (callFrame && !isMuted) toggleMute();
     }
 
     startTimer(round.time, isMyTurn);
+
+    // log round to transcript
+    const ts = document.getElementById("ts-history");
+    if (ts.children[0] && ts.children[0].style.textAlign === "center") ts.innerHTML = "";
+    const entry = document.createElement("div");
+    entry.className = "ts-entry " + round.speaker;
+    entry.innerHTML = "<div class=\"ts-meta " + round.speaker + "\">" + round.name + "</div><div class=\"ts-text\">" + (isMyTurn ? "your turn — speak your argument out loud" : "listening to opponent...") + "</div>";
+    ts.appendChild(entry);
+    ts.scrollTop = ts.scrollHeight;
   }
 
   function startTimer(seconds, isMyTurn) {
     clearInterval(timerInterval);
     let remaining = seconds;
-    const display = document.getElementById('timer-display');
-    const numEl = document.getElementById('timer-num');
-    const statusEl = document.getElementById('timer-status');
-    display.className = 'timer-display ' + (isMyTurn ? 'active-pink' : 'active-blue');
+    const display = document.getElementById("timer-display");
+    const numEl = document.getElementById("timer-num");
+    const statusEl = document.getElementById("timer-status");
+    display.className = "timer-display " + (isMyTurn ? "active-pink" : "active-blue");
 
     function tick() {
       const m = Math.floor(remaining / 60);
-      const s = (remaining % 60).toString().padStart(2, '0');
-      numEl.textContent = `${m}:${s}`;
-      statusEl.textContent = isMyTurn ? 'your time — speak up! 🎙' : 'opponent\'s turn ⏳';
-      if (remaining <= 10) numEl.style.color = '#D63384';
-      else numEl.style.color = '#2A1A2E';
+      const s = (remaining % 60).toString().padStart(2, "0");
+      numEl.textContent = m + ":" + s;
+      statusEl.textContent = isMyTurn ? "your time — speak up! 🎙" : "opponent speaking ⏳";
+      numEl.style.color = remaining <= 10 ? "#D63384" : "#2A1A2E";
       if (remaining <= 0) {
         clearInterval(timerInterval);
-        statusEl.textContent = 'time\'s up!';
-        if (isMyTurn) {
-          // auto submit if empty
-          const val = document.getElementById('arg-input').value.trim();
-          submitArgument(val || '[no argument submitted — time ran out]');
-        }
+        statusEl.textContent = "time\'s up!";
+        if (isMyTurn) advanceRound();
       }
       remaining--;
     }
@@ -609,92 +713,53 @@
     timerInterval = setInterval(tick, 1000);
   }
 
-  // ── SUBMIT ARGUMENT ──
-  async function submitArgument(forcedText) {
-    const text = typeof forcedText === 'string' ? forcedText : document.getElementById('arg-input').value.trim();
-    if (!text) return;
+  async function advanceRound() {
     clearInterval(timerInterval);
-    document.getElementById('arg-input').disabled = true;
-    document.getElementById('submit-arg').disabled = true;
+    document.getElementById("next-round-btn").style.display = "none";
 
-    await sb.from('debate_args').insert({
-      room_code: roomCode,
-      side: mySide,
-      name: myName,
-      round: currentRound,
-      round_name: rounds[currentRound].name,
-      text: text,
-      created_at: new Date().toISOString()
-    });
-
-    document.getElementById('arg-input').value = '';
-    document.getElementById('turn-note').textContent = 'argument submitted! waiting for opponent...';
-    document.getElementById('turn-note').className = 'your-turn-note waiting';
-  }
-
-  function addBubble(arg) {
-    const history = document.getElementById('arg-history');
-    const el = document.createElement('div');
-    el.className = `arg-bubble ${arg.side}`;
-    el.innerHTML = `
-      <div class="arg-meta">
-        <span class="arg-name ${arg.side}">${arg.name} (${arg.side.toUpperCase()})</span>
-        <span class="arg-round">${arg.round_name}</span>
-      </div>
-      <div class="arg-text">${arg.text}</div>`;
-    history.appendChild(el);
-    history.scrollTop = history.scrollHeight;
+    if (currentRound >= rounds.length - 1) {
+      // save ended state to DB so other person also ends
+      await sb.from("debate_rooms").update({ ended: true }).eq("code", roomCode);
+      endDebate();
+    } else {
+      const next = currentRound + 1;
+      // save current round to DB so other person advances too
+      await sb.from("debate_rooms").update({ current_round: next }).eq("code", roomCode);
+      currentRound = next;
+      startRound(next);
+    }
   }
 
   function endDebate() {
     clearInterval(timerInterval);
-    document.getElementById('room').style.display = 'none';
-    document.getElementById('end-screen').style.display = 'block';
+    if (callFrame) { try { callFrame.leave(); } catch(e) {} }
+    document.getElementById("room").style.display = "none";
+    document.getElementById("end-screen").style.display = "block";
   }
 
+  // COPY HELPERS
   function copyToClipboard(text, btnEl) {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => {
-        if (btnEl) { btnEl.textContent = 'copied!'; setTimeout(() => btnEl.textContent = 'copy', 2000); }
+        if (btnEl) { btnEl.textContent = "copied!"; setTimeout(() => btnEl.textContent = "copy", 2000); }
       }).catch(() => legacyCopy(text, btnEl));
-    } else {
-      legacyCopy(text, btnEl);
-    }
+    } else { legacyCopy(text, btnEl); }
   }
-
   function legacyCopy(text, btnEl) {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;';
-    document.body.appendChild(ta);
-    ta.focus(); ta.select();
-    try {
-      document.execCommand('copy');
-      if (btnEl) { btnEl.textContent = 'copied!'; setTimeout(() => btnEl.textContent = 'copy', 2000); }
-    } catch(e) {
-      window.prompt('Copy this link manually:', text);
-    }
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.cssText = "position:fixed;left:-9999px;opacity:0;";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand("copy"); if (btnEl) { btnEl.textContent = "copied!"; setTimeout(() => btnEl.textContent = "copy", 2000); } }
+    catch(e) { window.prompt("Copy this link:", text); }
     document.body.removeChild(ta);
   }
+  function copyLink() { copyToClipboard(document.getElementById("share-link").value, document.querySelector("#share-box .copy-btn")); }
+  function copyWaitingLink() { copyToClipboard(document.getElementById("waiting-link").value, document.querySelector("#waiting .copy-btn")); }
 
-  function copyLink() {
-    const val = document.getElementById('share-link').value;
-    const btn = document.querySelector('#share-box .copy-btn');
-    copyToClipboard(val, btn);
-  }
-  function copyWaitingLink() {
-    const val = document.getElementById('waiting-link').value;
-    const btn = document.querySelector('#waiting .copy-btn');
-    copyToClipboard(val, btn);
-  }
-
-  // ── CHECK URL FOR ROOM CODE ──
+  // CHECK URL FOR ROOM CODE
   const urlParams = new URLSearchParams(window.location.search);
-  const roomParam = urlParams.get('room');
-  if (roomParam) {
-    document.getElementById('join-code').value = roomParam;
-  }
+  const roomParam = urlParams.get("room");
+  if (roomParam) { document.getElementById("join-code").value = roomParam; }
 </script>
-
 </body>
 </html>
