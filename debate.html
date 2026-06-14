@@ -652,13 +652,40 @@
     document.getElementById('end-screen').style.display = 'block';
   }
 
+  function copyToClipboard(text, btnEl) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        if (btnEl) { btnEl.textContent = 'copied!'; setTimeout(() => btnEl.textContent = 'copy', 2000); }
+      }).catch(() => legacyCopy(text, btnEl));
+    } else {
+      legacyCopy(text, btnEl);
+    }
+  }
+
+  function legacyCopy(text, btnEl) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try {
+      document.execCommand('copy');
+      if (btnEl) { btnEl.textContent = 'copied!'; setTimeout(() => btnEl.textContent = 'copy', 2000); }
+    } catch(e) {
+      window.prompt('Copy this link manually:', text);
+    }
+    document.body.removeChild(ta);
+  }
+
   function copyLink() {
-    navigator.clipboard.writeText(document.getElementById('share-link').value);
-    document.querySelector('.copy-btn').textContent = 'copied!';
-    setTimeout(() => document.querySelector('.copy-btn').textContent = 'copy', 2000);
+    const val = document.getElementById('share-link').value;
+    const btn = document.querySelector('#share-box .copy-btn');
+    copyToClipboard(val, btn);
   }
   function copyWaitingLink() {
-    navigator.clipboard.writeText(document.getElementById('waiting-link').value);
+    const val = document.getElementById('waiting-link').value;
+    const btn = document.querySelector('#waiting .copy-btn');
+    copyToClipboard(val, btn);
   }
 
   // ── CHECK URL FOR ROOM CODE ──
