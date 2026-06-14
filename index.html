@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chirrp — speak. debate. win.</title>
+  <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: #FEF0F5;
+      color: #2A1A2E;
+      min-height: 100vh;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    /* TICKER */
+    .ticker {
+      background: #D63384;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      padding: 8px 0;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .ticker-inner {
+      display: inline-block;
+      animation: ticker 20s linear infinite;
+    }
+    @keyframes ticker {
+      0% { transform: translateX(100vw); }
+      100% { transform: translateX(-100%); }
+    }
+
+    /* NAV */
+    nav {
+      background: #fff;
+      border-bottom: 2px solid #F0D0E4;
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-family: 'Righteous', cursive;
+      font-size: 28px;
+      color: #D63384;
+    }
+    .logo span { color: #3AAFE0; }
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 700;
+      color: #888;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: #D63384; }
+    .nav-cta {
+      background: #D63384;
+      color: #fff;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 10px 22px;
+      border-radius: 22px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .nav-cta:hover { background: #c0226e; }
+
+    /* MAIN LAYOUT */
+    main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+    /* HERO */
+    .hero {
+      background: #fff;
+      border: 2px solid #F0D0E4;
+      border-radius: 20px;
+      padding: 48px 40px;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 40px;
+      align-items: center;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #FEF0F5;
+      border: 1.5px solid #F0D0E4;
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #D63384;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-family: 'Righteous', cursive;
+      font-size: 52px;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    .hero h1 .pink { color: #D63384; }
+    .hero h1 .blue { color: #3AAFE0; }
+    .hero-sub {
+      font-size: 15px;
+      color: #888;
+      line-height: 1.75;
+      max-width: 480px;
+      margin-bottom: 28px;
+    }
+    .hero-btns { display: flex; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
+    .btn-pink {
+      background: #D63384;
+      color: #fff;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 13px 26px;
+      border-radius: 24px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-pink:hover { background: #c0226e; }
+    .btn-blue {
+      background: #3AAFE0;
+      color: #fff;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 13px 26px;
+      border-radius: 24px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-blue:hover { background: #2290be; }
+    .hero-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+    .h-tag {
+      font-size: 12px;
+      font-weight: 700;
+      color: #3AAFE0;
+      background: #EBF7FD;
+      border: 1.5px solid #B8E4F5;
+      border-radius: 14px;
+      padding: 5px 13px;
+    }
+    .hero-right { display: flex; flex-direction: column; gap: 12px; min-width: 200px; }
+
+    /* MINI CARDS in hero */
+    .mini-card {
+      background: #FEF0F5;
+      border: 2px solid #F0D0E4;
+      border-radius: 14px;
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .mini-card .big-num {
+      font-family: 'Righteous', cursive;
+      font-size: 32px;
+      color: #D63384;
+    }
+    .mini-card .lbl { font-size: 11px; font-weight: 700; color: #aaa; margin-top: 2px; }
+    .mini-card.blue-card { background: #EBF7FD; border-color: #B8E4F5; }
+    .mini-card.blue-card .big-num { color: #3AAFE0; }
+
+    /* SECTION HEADER */
+    .sec-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: #D63384;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .sec-title {
+      font-family: 'Righteous', cursive;
+      font-size: 26px;
+      color: #2A1A2E;
+      margin-bottom: 16px;
+    }
+
+    /* STREAK + XP ROW */
+    .top-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+    .streak-card {
+      background: #fff;
+      border: 2px solid #F0D0E4;
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .streak-num {
+      font-family: 'Righteous', cursive;
+      font-size: 52px;
+      color: #D63384;
+      line-height: 1;
+    }
+    .streak-sub { font-size: 13px; font-weight: 700; color: #aaa; margin-bottom: 14px; }
+    .dots-row { display: flex; gap: 7px; }
+    .dot-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #F0D0E4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: #ccc;
+    }
+    .dot.done { background: #D63384; border-color: #D63384; color: #fff; font-size: 14px; }
+    .dot.today { background: #EBF7FD; border-color: #3AAFE0; color: #3AAFE0; }
+    .dot-lbl { font-size: 9px; font-weight: 800; color: #ccc; }
+    .dot-lbl.pink { color: #D63384; }
+    .dot-lbl.blue { color: #3AAFE0; }
+
+    .xp-card {
+      background: #2A1A2E;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .xp-label { font-size: 11px; font-weight: 800; color: #F0A0C4; letter-spacing: 1px; margin-bottom: 4px; }
+    .xp-num { font-family: 'Righteous', cursive; font-size: 36px; color: #fff; }
+    .xp-of { font-size: 12px; color: #3AAFE0; margin-bottom: 12px; }
+    .xp-track { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+    .xp-fill { height: 100%; width: 67%; background: #D63384; border-radius: 4px; }
+    .xp-hint { font-size: 11px; color: #666; }
+
+    .challenge-card {
+      background: #fff;
+      border: 2px solid #F0D0E4;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .ch-chip {
+      display: inline-block;
+      background: #EBF7FD;
+      color: #1A7FAA;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 10px;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .ch-q {
+      font-family: 'Righteous', cursive;
+      font-size: 16px;
+      color: #2A1A2E;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      flex: 1;
+    }
+    .ch-meta { font-size: 11px; color: #aaa; font-weight: 700; margin-bottom: 14px; }
+    .ch-btn {
+      background: #D63384;
+      color: #fff;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 10px;
+      border-radius: 16px;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s;
+    }
+    .ch-btn:hover { background: #c0226e; }
+
+    /* FEATURES */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .feat-card {
+      background: #fff;
+      border: 2px solid #F0D0E4;
+      border-radius: 16px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+    .feat-card:hover { border-color: #D63384; }
+    .feat-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+    .feat-icon.pink { background: #FEF0F5; }
+    .feat-icon.blue { background: #EBF7FD; }
+    .feat-name { font-size: 15px; font-weight: 800; color: #2A1A2E; margin-bottom: 6px; }
+    .feat-desc { font-size: 12px; color: #888; line-height: 1.65; }
+    .feat-pill {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 10px;
+    }
+    .feat-pill.pink { background: #FEF0F5; color: #D63384; }
+    .feat-pill.blue { background: #EBF7FD; color: #1A7FAA; }
+
+    /* WEEKLY STREAK */
+    .weekly-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .weekly-card {
+      background: #fff;
+      border: 2px solid #F0D0E4;
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .weekly-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .wk-days { display: flex; gap: 8px; }
+    .wk-d { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+    .wk-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid #F0D0E4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+    .wk-circle.done { background: #D63384; border-color: #D63384; color: #fff; }
+    .wk-circle.today { background: #EBF7FD; border-color: #3AAFE0; color: #3AAFE0; }
+    .wk-lbl { font-size: 9px; font-weight: 800; color: #bbb; }
+    .wk-lbl.active { color: #3AAFE0; }
+    .wk-pts { font-size: 8px; color: #ccc; font-weight: 700; }
+    .wk-note {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #3AAFE0;
+      font-weight: 700;
+      background: #EBF7FD;
+      padding: 8px 12px;
+      border-radius: 10px;
+    }
+
+    /* SKILLS */
+    .skills-card {
+      background: #fff;
+      border: 2px solid #F0D0E4;
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .sk-title { font-size: 14px; font-weight: 800; color: #2A1A2E; margin-bottom: 14px; }
+    .sk-r { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .sk-r:last-child { margin-bottom: 0; }
+    .sk-n { font-size: 12px; font-weight: 700; color: #2A1A2E; min-width: 110px; }
+    .sk-bar { flex: 1; height: 8px; background: #F5E8F0; border-radius: 4px; overflow: hidden; }
+    .sk-f { height: 100%; border-radius: 4px; }
+    .sk-p { font-size: 11px; font-weight: 800; min-width: 30px; text-align: right; }
+
+    /* LEADERBOARD */
+    .lb-card {
+      background: #fff;
+      border: 2px solid #F0D0E4;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      background: #FEF8FB;
+    }
+    .lb-row.you { background: #EBF7FD; border: 1.5px solid #3AAFE0; }
+    .lb-rank { font-family: 'Righteous', cursive; font-size: 20px; color: #D63384; min-width: 24px; }
+    .lb-av {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: #F0D0E4;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; color: #D63384;
+    }
+    .lb-av.you { background: #3AAFE0; color: #fff; }
+    .lb-name { font-size: 13px; font-weight: 700; color: #2A1A2E; flex: 1; }
+    .lb-pts { font-size: 13px; font-weight: 800; color: #D63384; }
+    .lb-pts.blue { color: #3AAFE0; }
+
+    /* JOIN BANNER */
+    .join-banner {
+      background: #D63384;
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .join-banner h2 {
+      font-family: 'Righteous', cursive;
+      font-size: 32px;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+    .join-banner p { font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 24px; }
+    .join-btns { display: flex; gap: 12px; justify-content: center; }
+    .btn-white {
+      background: #fff;
+      color: #D63384;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 12px 28px;
+      border-radius: 24px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-outline {
+      background: transparent;
+      color: #fff;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 12px 28px;
+      border-radius: 24px;
+      border: 2px solid rgba(255,255,255,0.5);
+      cursor: pointer;
+    }
+
+    /* FOOTER */
+    footer {
+      background: #2A1A2E;
+      padding: 32px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+    }
+    .f-logo { font-family: 'Righteous', cursive; font-size: 24px; color: #F0A0C4; margin-bottom: 8px; }
+    .f-logo span { color: #3AAFE0; }
+    .f-copy { font-size: 12px; color: #555; line-height: 1.6; }
+    .f-col-title { font-size: 12px; font-weight: 800; color: #F0A0C4; margin-bottom: 10px; letter-spacing: 1px; }
+    .f-links { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .f-links a { font-size: 12px; color: #555; transition: color 0.2s; }
+    .f-links a:hover { color: #F0A0C4; }
+
+    /* TASKBAR */
+    .taskbar {
+      background: #F0D0E4;
+      border-top: 2px solid #D4A0C0;
+      padding: 7px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      bottom: 0;
+    }
+    .tb-start {
+      background: #D63384;
+      color: #fff;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 6px 16px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+    .tb-tabs { display: flex; gap: 6px; }
+    .tb-tab {
+      background: #fff;
+      border: 1px solid #D4A0C0;
+      border-radius: 4px;
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+    }
+    .tb-time { font-size: 12px; font-weight: 800; color: #2A1A2E; }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      nav { padding: 12px 16px; }
+      .nav-links { display: none; }
+      main { padding: 16px; }
+      .hero { grid-template-columns: 1fr; padding: 28px 20px; }
+      .hero-right { flex-direction: row; }
+      .hero h1 { font-size: 36px; }
+      .top-row { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .weekly-wrap { grid-template-columns: 1fr; }
+      footer { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ticker">
+    <span class="ticker-inner">✦ NEW CHALLENGE EVERY DAY ✦ DEBATE · GD · INTERVIEW · MUN ✦ FREE FOR STUDENTS ✦ UR VOICE MATTERS ✦ JOIN 14K+ CHIRRPERS ✦</span>
+  </div>
+
+  <nav>
+    <div class="logo">chir<span>rp</span></div>
+    <ul class="nav-links">
+      <li><a href="#">home</a></li>
+      <li><a href="practice.html">practice</a></li>
+      <li><a href="debate.html">debate</a></li>
+      <li><a href="leaderboard.html">leaderboard</a></li>
+      <li><a href="about.html">about</a></li>
+    </ul>
+    <button class="nav-cta" onclick="window.location.href='signup.html'">join chirrp ✦</button>
+  </nav>
+
+  <main>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-left">
+        <div class="hero-eyebrow">✦ your communication glow-up kit</div>
+        <h1>speak. debate.<br><span class="pink">interview.</span> <span class="blue">win.</span></h1>
+        <p class="hero-sub">daily speaking challenges, group discussions, mock interviews, MUN simulations & live debate with friends — all in one place. no more scattered prep. no more boring classes.</p>
+        <div class="hero-btns">
+          <button class="btn-pink" onclick="window.location.href='signup.html'">start for free ✦</button>
+          <button class="btn-blue" onclick="window.location.href='practice.html'">see how it works</button>
+        </div>
+        <div class="hero-tags">
+          <span class="h-tag">2 & 5 min challenges</span>
+          <span class="h-tag">GD practice</span>
+          <span class="h-tag">mock interviews</span>
+          <span class="h-tag">MUN simulations</span>
+          <span class="h-tag">live debate</span>
+        </div>
+      </div>
+      <div class="hero-right">
+        <div class="mini-card">
+          <div class="big-num">14k+</div>
+          <div class="lbl">active chirrpers</div>
+        </div>
+        <div class="mini-card blue-card">
+          <div class="big-num">100+</div>
+          <div class="lbl">debate topics</div>
+        </div>
+        <div class="mini-card">
+          <div class="big-num">free</div>
+          <div class="lbl">always, forever</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STREAK + XP + TODAY -->
+    <div class="top-row">
+      <div class="streak-card">
+        <div class="streak-num">12</div>
+        <div class="streak-sub">day streak 🔥</div>
+        <div class="dots-row">
+          <div class="dot-wrap"><div class="dot done">✓</div><span class="dot-lbl pink">M</span></div>
+          <div class="dot-wrap"><div class="dot done">✓</div><span class="dot-lbl pink">T</span></div>
+          <div class="dot-wrap"><div class="dot done">✓</div><span class="dot-lbl pink">W</span></div>
+          <div class="dot-wrap"><div class="dot done">✓</div><span class="dot-lbl pink">T</span></div>
+          <div class="dot-wrap"><div class="dot today">★</div><span class="dot-lbl blue">F</span></div>
+          <div class="dot-wrap"><div class="dot"></div><span class="dot-lbl">S</span></div>
+          <div class="dot-wrap"><div class="dot"></div><span class="dot-lbl">S</span></div>
+        </div>
+      </div>
+
+      <div class="xp-card">
+        <div>
+          <div class="xp-label">XP THIS WEEK</div>
+          <div class="xp-num">670</div>
+          <div class="xp-of">/ 1000 xp to next badge</div>
+        </div>
+        <div>
+          <div class="xp-track"><div class="xp-fill"></div></div>
+          <div class="xp-hint">330 xp to unlock "debate queen" ✦</div>
+        </div>
+      </div>
+
+      <div class="challenge-card">
+        <div>
+          <div class="ch-chip">TODAY'S CHALLENGE · 2 MIN</div>
+          <div class="ch-q">"is hustle culture doing more harm than good to gen z?"</div>
+          <div class="ch-meta">⏱ 2 min · extempore · +80 xp</div>
+        </div>
+        <button class="ch-btn" onclick="window.location.href='practice.html'">🎙 record my response</button>
+      </div>
+    </div>
+
+    <!-- FEATURES -->
+    <div style="margin-bottom: 16px;">
+      <div class="sec-label">what you practice</div>
+      <div class="sec-title">everything in one place ✦</div>
+    </div>
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon pink">🎙</div>
+        <div class="feat-name">speaking challenges</div>
+        <div class="feat-desc">2 or 5 min timed prompts — extempore, storytelling, persuasion. new topic drops every single day.</div>
+        <span class="feat-pill pink">daily drop</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon blue">💬</div>
+        <div class="feat-name">GD practice</div>
+        <div class="feat-desc">join a group discussion room with other users. random topics or pick your own. real people, real debate.</div>
+        <span class="feat-pill blue">live rooms</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon pink">💼</div>
+        <div class="feat-name">interview prep</div>
+        <div class="feat-desc">answer the most common interview questions in 1–2 min. practice HR, PI, and behavioural rounds.</div>
+        <span class="feat-pill pink">timed practice</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon blue">⚔️</div>
+        <div class="feat-name">debate mode</div>
+        <div class="feat-desc">pick a topic from 100+ curated debates. share a link with a friend and go head-to-head live.</div>
+        <span class="feat-pill blue">with friends</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon pink">🌍</div>
+        <div class="feat-name">MUN simulation</div>
+        <div class="feat-desc">pick your country, committee & agenda. get your briefing card and debate in a live committee room.</div>
+        <span class="feat-pill pink">choose country</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon blue">📈</div>
+        <div class="feat-name">growth tracking</div>
+        <div class="feat-desc">every session adds to your journey. track streaks, xp, scores — see yourself actually improving.</div>
+        <span class="feat-pill blue">scores + stats</span>
+      </div>
+    </div>
+
+    <!-- WEEKLY STREAK + SKILLS -->
+    <div class="weekly-wrap">
+      <div class="weekly-card">
+        <div class="weekly-top">
+          <div>
+            <div class="sec-label">weekly streak</div>
+            <div style="font-family:'Righteous',cursive;font-size:20px;color:#2A1A2E;">this week</div>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:#D63384;">week 3 of your journey</div>
+        </div>
+        <div class="wk-days">
+          <div class="wk-d"><div class="wk-circle done">✓</div><span class="wk-lbl">mon</span><span class="wk-pts">+80xp</span></div>
+          <div class="wk-d"><div class="wk-circle done">✓</div><span class="wk-lbl">tue</span><span class="wk-pts">+95xp</span></div>
+          <div class="wk-d"><div class="wk-circle done">✓</div><span class="wk-lbl">wed</span><span class="wk-pts">+110xp</span></div>
+          <div class="wk-d"><div class="wk-circle done">✓</div><span class="wk-lbl">thu</span><span class="wk-pts">+80xp</span></div>
+          <div class="wk-d"><div class="wk-circle today">★</div><span class="wk-lbl active">today</span><span class="wk-pts">pending</span></div>
+          <div class="wk-d"><div class="wk-circle"></div><span class="wk-lbl">sat</span><span class="wk-pts">—</span></div>
+          <div class="wk-d"><div class="wk-circle"></div><span class="wk-lbl">sun</span><span class="wk-pts">—</span></div>
+        </div>
+        <div class="wk-note">4/5 done — complete today to unlock your weekly bonus! ✦</div>
+      </div>
+
+      <div class="skills-card">
+        <div class="sk-title">your communication journey so far ✦</div>
+        <div class="sk-r">
+          <span class="sk-n">argumentation</span>
+          <div class="sk-bar"><div class="sk-f" style="width:72%;background:#D63384;"></div></div>
+          <span class="sk-p" style="color:#D63384;">72%</span>
+        </div>
+        <div class="sk-r">
+          <span class="sk-n">interview ready</span>
+          <div class="sk-bar"><div class="sk-f" style="width:58%;background:#3AAFE0;"></div></div>
+          <span class="sk-p" style="color:#3AAFE0;">58%</span>
+        </div>
+        <div class="sk-r">
+          <span class="sk-n">GD confidence</span>
+          <div class="sk-bar"><div class="sk-f" style="width:66%;background:#D63384;"></div></div>
+          <span class="sk-p" style="color:#D63384;">66%</span>
+        </div>
+        <div class="sk-r">
+          <span class="sk-n">spontaneous</span>
+          <div class="sk-bar"><div class="sk-f" style="width:45%;background:#3AAFE0;"></div></div>
+          <span class="sk-p" style="color:#3AAFE0;">45%</span>
+        </div>
+        <div class="sk-r">
+          <span class="sk-n">MUN / debate</span>
+          <div class="sk-bar"><div class="sk-f" style="width:63%;background:#D63384;"></div></div>
+          <span class="sk-p" style="color:#D63384;">63%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div style="margin-bottom:16px;">
+      <div class="sec-label">leaderboard</div>
+      <div class="sec-title">top chirrpers this week ✦</div>
+    </div>
+    <div class="lb-card">
+      <div class="lb-row"><span class="lb-rank">1</span><div class="lb-av">AR</div><span class="lb-name">Ananya R.</span><span class="lb-pts">2,340 xp</span></div>
+      <div class="lb-row"><span class="lb-rank">2</span><div class="lb-av">SK</div><span class="lb-name">Siddharth K.</span><span class="lb-pts">2,100 xp</span></div>
+      <div class="lb-row"><span class="lb-rank">3</span><div class="lb-av">PM</div><span class="lb-name">Priya M.</span><span class="lb-pts">1,890 xp</span></div>
+      <div class="lb-row you"><span class="lb-rank" style="color:#3AAFE0;">7</span><div class="lb-av you">YO</div><span class="lb-name" style="color:#3AAFE0;font-weight:800;">you</span><span class="lb-pts blue">670 xp</span></div>
+      <div style="margin-top:12px;">
+        <a href="leaderboard.html" style="font-size:13px;font-weight:700;color:#3AAFE0;">see full leaderboard →</a>
+      </div>
+    </div>
+
+    <!-- JOIN BANNER -->
+    <div class="join-banner">
+      <h2>ready to find your voice? ✦</h2>
+      <p>join thousands of students already on their chirrp journey. free to start, always.</p>
+      <div class="join-btns">
+        <button class="btn-white" onclick="window.location.href='signup.html'">start for free</button>
+        <button class="btn-outline" onclick="window.location.href='about.html'">learn more</button>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <div>
+      <div class="f-logo">chir<span>rp</span></div>
+      <div class="f-copy">your voice, your era.<br>made with luv for students everywhere.<br><br>© 2025 chirrp</div>
+    </div>
+    <div>
+      <div class="f-col-title">PRACTICE</div>
+      <ul class="f-links">
+        <li><a href="#">speaking challenges</a></li>
+        <li><a href="#">debate mode</a></li>
+        <li><a href="#">group discussions</a></li>
+        <li><a href="#">interview prep</a></li>
+        <li><a href="#">MUN simulation</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="f-col-title">CHIRRP</div>
+      <ul class="f-links">
+        <li><a href="#">about us</a></li>
+        <li><a href="#">leaderboard</a></li>
+        <li><a href="#">community</a></li>
+        <li><a href="#">contact</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <div class="taskbar">
+    <button class="tb-start">★ start</button>
+    <div class="tb-tabs">
+      <div class="tb-tab">streak.exe</div>
+      <div class="tb-tab">challenge open</div>
+    </div>
+    <div class="tb-time" id="clock">10:30 PM</div>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      let h = now.getHours();
+      const m = now.getMinutes().toString().padStart(2, '0');
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      document.getElementById('clock').textContent = h + ':' + m + ' ' + ampm;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+
+</body>
+</html>
