@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chirrp — join the flock</title>
+  <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: #FEF0F5;
+      color: #2A1A2E;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* NAV */
+    nav {
+      background: #fff;
+      border-bottom: 2px solid #F0D0E4;
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Righteous', cursive;
+      font-size: 28px;
+      color: #D63384;
+      text-decoration: none;
+    }
+    .logo span { color: #3AAFE0; }
+    .nav-login {
+      font-size: 14px;
+      font-weight: 600;
+      color: #888;
+    }
+    .nav-login a { color: #D63384; font-weight: 700; text-decoration: none; }
+    .nav-login a:hover { text-decoration: underline; }
+
+    /* PAGE */
+    .page {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    .card-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      background: #fff;
+      border: 2px solid #F0D0E4;
+      border-radius: 24px;
+      overflow: hidden;
+      max-width: 860px;
+      width: 100%;
+      box-shadow: 0 8px 40px rgba(214,51,132,0.08);
+    }
+
+    /* LEFT PANEL */
+    .left-panel {
+      background: #D63384;
+      padding: 48px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .left-panel h2 {
+      font-family: 'Righteous', cursive;
+      font-size: 36px;
+      color: #fff;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+    .left-panel p {
+      font-size: 14px;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+    .perks { display: flex; flex-direction: column; gap: 14px; }
+    .perk {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .perk-icon { font-size: 20px; }
+    .perk-text { font-size: 13px; font-weight: 600; color: #fff; }
+    .left-bottom {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 32px;
+    }
+
+    /* RIGHT PANEL */
+    .right-panel { padding: 48px 40px; }
+    .right-panel h3 {
+      font-family: 'Righteous', cursive;
+      font-size: 26px;
+      color: #2A1A2E;
+      margin-bottom: 6px;
+    }
+    .right-panel .sub {
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 28px;
+      font-weight: 500;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      gap: 0;
+      background: #FEF0F5;
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 9px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #aaa;
+      transition: all 0.2s;
+      border: none;
+      background: transparent;
+      font-family: 'Quicksand', sans-serif;
+    }
+    .tab.active {
+      background: #D63384;
+      color: #fff;
+    }
+
+    /* FORM */
+    .form { display: flex; flex-direction: column; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #2A1A2E;
+      letter-spacing: 0.5px;
+    }
+    .form-group input {
+      padding: 12px 16px;
+      border: 2px solid #F0D0E4;
+      border-radius: 12px;
+      font-size: 14px;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 500;
+      color: #2A1A2E;
+      background: #fff;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .form-group input:focus { border-color: #D63384; }
+    .form-group input::placeholder { color: #ccc; }
+
+    .submit-btn {
+      background: #D63384;
+      color: #fff;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 14px;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s;
+      margin-top: 4px;
+    }
+    .submit-btn:hover { background: #c0226e; }
+    .submit-btn:disabled { background: #F0A0C4; cursor: not-allowed; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 4px 0;
+    }
+    .divider-line { flex: 1; height: 1px; background: #F0D0E4; }
+    .divider-text { font-size: 12px; color: #ccc; font-weight: 600; }
+
+    /* MESSAGES */
+    .msg {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      display: none;
+    }
+    .msg.success { background: #EBF7FD; color: #1A7FAA; border: 1.5px solid #B8E4F5; }
+    .msg.error { background: #FEE8F0; color: #c0226e; border: 1.5px solid #F0A0C4; }
+    .msg.show { display: block; }
+
+    /* FOOTER */
+    footer {
+      background: #2A1A2E;
+      padding: 16px 32px;
+      text-align: center;
+      font-size: 12px;
+      color: #555;
+    }
+    footer a { color: #F0A0C4; text-decoration: none; }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      .card-wrap { grid-template-columns: 1fr; }
+      .left-panel { padding: 32px 24px; }
+      .right-panel { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="logo">chir<span>rp</span></a>
+    <div class="nav-login">already a chirrper? <a href="#" id="switchToLogin">log in</a></div>
+  </nav>
+
+  <div class="page">
+    <div class="card-wrap">
+
+      <!-- LEFT -->
+      <div class="left-panel">
+        <div>
+          <h2>your communication glow-up kit ✦</h2>
+          <p>join thousands of students levelling up their speaking, debating, and interview skills — every single day.</p>
+          <div class="perks">
+            <div class="perk"><span class="perk-icon">🎙</span><span class="perk-text">daily speaking challenges</span></div>
+            <div class="perk"><span class="perk-icon">⚔️</span><span class="perk-text">live debate with friends</span></div>
+            <div class="perk"><span class="perk-icon">💼</span><span class="perk-text">mock interview practice</span></div>
+            <div class="perk"><span class="perk-icon">🌍</span><span class="perk-text">MUN simulations</span></div>
+            <div class="perk"><span class="perk-icon">🔥</span><span class="perk-text">streaks, XP & leaderboard</span></div>
+          </div>
+        </div>
+        <div class="left-bottom">free forever. no credit card needed.</div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="right-panel">
+        <h3 id="panel-title">join chirrp</h3>
+        <p class="sub" id="panel-sub">create your free account in seconds</p>
+
+        <div class="tabs">
+          <button class="tab active" id="tab-signup" onclick="switchTab('signup')">sign up</button>
+          <button class="tab" id="tab-login" onclick="switchTab('login')">log in</button>
+        </div>
+
+        <div class="msg" id="msg"></div>
+
+        <!-- SIGNUP FORM -->
+        <div id="signup-form">
+          <div class="form">
+            <div class="form-group">
+              <label>YOUR NAME</label>
+              <input type="text" id="signup-name" placeholder="what do we call you?" />
+            </div>
+            <div class="form-group">
+              <label>EMAIL</label>
+              <input type="email" id="signup-email" placeholder="your@email.com" />
+            </div>
+            <div class="form-group">
+              <label>PASSWORD</label>
+              <input type="password" id="signup-password" placeholder="make it a good one" />
+            </div>
+            <button class="submit-btn" id="signup-btn" onclick="handleSignup()">create my account ✦</button>
+          </div>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <div id="login-form" style="display:none;">
+          <div class="form">
+            <div class="form-group">
+              <label>EMAIL</label>
+              <input type="email" id="login-email" placeholder="your@email.com" />
+            </div>
+            <div class="form-group">
+              <label>PASSWORD</label>
+              <input type="password" id="login-password" placeholder="your password" />
+            </div>
+            <button class="submit-btn" id="login-btn" onclick="handleLogin()">log in ✦</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    © 2025 chirrp · your voice, your era · <a href="index.html">back to home</a>
+  </footer>
+
+  <script>
+    // --- SUPABASE INIT ---
+    const { createClient } = supabase;
+    const sb = createClient(
+      'https://mkjhrlsxmakbnxqrrvlu.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ramhybHN4bWFrYm54cXJydmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNjcyNTMsImV4cCI6MjA5Njk0MzI1M30.fH_ZoJPYnNGwHX6gPELYIIApe9EzZt6SYlb8wPMeMtI'
+    );
+
+    // --- TAB SWITCH ---
+    function switchTab(tab) {
+      const isSignup = tab === 'signup';
+      document.getElementById('tab-signup').classList.toggle('active', isSignup);
+      document.getElementById('tab-login').classList.toggle('active', !isSignup);
+      document.getElementById('signup-form').style.display = isSignup ? 'block' : 'none';
+      document.getElementById('login-form').style.display = isSignup ? 'none' : 'block';
+      document.getElementById('panel-title').textContent = isSignup ? 'join chirrp' : 'welcome back';
+      document.getElementById('panel-sub').textContent = isSignup ? 'create your free account in seconds' : 'good to see you again ✦';
+      hideMsg();
+    }
+
+    document.getElementById('switchToLogin').addEventListener('click', (e) => {
+      e.preventDefault();
+      switchTab('login');
+    });
+
+    // --- MESSAGES ---
+    function showMsg(text, type) {
+      const el = document.getElementById('msg');
+      el.textContent = text;
+      el.className = `msg ${type} show`;
+    }
+    function hideMsg() {
+      document.getElementById('msg').className = 'msg';
+    }
+
+    // --- SIGN UP ---
+    async function handleSignup() {
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const btn = document.getElementById('signup-btn');
+
+      if (!name || !email || !password) {
+        showMsg('please fill in all fields!', 'error'); return;
+      }
+      if (password.length < 6) {
+        showMsg('password must be at least 6 characters', 'error'); return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'creating your account...';
+      hideMsg();
+
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: name } }
+      });
+
+      if (error) {
+        showMsg(error.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'create my account ✦';
+      } else {
+        showMsg('you\'re in! check your email to confirm your account, then come back to log in ✦', 'success');
+        btn.textContent = 'account created!';
+      }
+    }
+
+    // --- LOG IN ---
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('login-btn');
+
+      if (!email || !password) {
+        showMsg('please fill in all fields!', 'error'); return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'logging in...';
+      hideMsg();
+
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        showMsg(error.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'log in ✦';
+      } else {
+        showMsg('welcome back! redirecting...', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 1200);
+      }
+    }
+
+    // --- ENTER KEY support ---
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      const signupVisible = document.getElementById('signup-form').style.display !== 'none';
+      if (signupVisible) handleSignup();
+      else handleLogin();
+    });
+
+    // --- CHECK IF ALREADY LOGGED IN ---
+    sb.auth.getSession().then(({ data }) => {
+      if (data.session) window.location.href = 'dashboard.html';
+    });
+  </script>
+
+</body>
+</html>
