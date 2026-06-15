@@ -188,11 +188,12 @@
         <div class="cat-desc">goals, achievements, failures, why this college/company, future plans</div>
         <span class="cat-count">18 questions</span>
       </div>
-      <div class="cat-card" onclick="selectCat(this,'gd')">
+      <div class="cat-card" style="opacity:0.4;cursor:not-allowed;position:relative;" title="coming soon">
+        <div style="position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;background:#EBF7FD;color:#1A7FAA;padding:3px 8px;border-radius:8px;">COMING SOON</div>
         <div class="cat-icon">💬</div>
-        <div class="cat-name">GD Topics</div>
-        <div class="cat-desc">practice framing opinions on current affairs, business, and society</div>
-        <span class="cat-count">25 questions</span>
+        <div class="cat-name">GD Rooms</div>
+        <div class="cat-desc">live group discussions with 4-5 people — coming once voice is ready</div>
+        <span class="cat-count">voice feature</span>
       </div>
       <div class="cat-card" onclick="selectCat(this,'situational')">
         <div class="cat-icon">🧩</div>
@@ -492,6 +493,7 @@
   }
 
   function selectCat(el, cat) {
+    if (cat === 'gd') return; // coming soon
     document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
     selectedCategory = cat;
