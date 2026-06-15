@@ -652,9 +652,154 @@
     allDelegates = shuffle(allDelegates);
   }
 
-  function startSimulation() {
+  let munRoomCode = null;
+  let roomPollInterval = null;
+
+  function genCode() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
+
+  async function startSimulation() {
     if (!selectedCountry) { showMsg('msg-country', 'please pick a country!', 'error'); return; }
-    buildDelegates();
+
+    if (selectedMode === 'group') {
+      await createMunRoom();
+    } else {
+      launchRoom();
+    }
+  }
+
+  async function createMunRoom() {
+    munRoomCode = genCode();
+    const delegateName = document.getElementById('delegate-name-input').value.trim()
+      || (userProfile?.name || 'You');
+
+    const hostDelegate = {
+      name: delegateName,
+      country: selectedCountry.name,
+      flag: selectedCountry.flag,
+      isUser: true,
+      isHost: true
+    };
+
+    await sb.from('mun_rooms').insert({
+      code: munRoomCode,
+      committee: selectedCommittee,
+      agenda: selectedAgenda,
+      host_name: delegateName,
+      host_country: selectedCountry.name,
+      host_flag: selectedCountry.flag,
+      delegates: JSON.stringify([hostDelegate]),
+      status: 'waiting'
+    });
+
+    const link = window.location.origin + '/mun.html?room=' + munRoomCode;
+    document.getElementById('share-link-input').value = link;
+
+    // show waiting screen
+    showScreen('screen-waiting');
+    updateDelegatesPreview([hostDelegate]);
+
+    // poll for new joiners
+    roomPollInterval = setInterval(async () => {
+      const { data: room } = await sb.from('mun_rooms').select('*').eq('code', munRoomCode).single();
+      if (!room) return;
+      const delegates = typeof room.delegates === 'string' ? JSON.parse(room.delegates) : room.delegates;
+      updateDelegatesPreview(delegates);
+    }, 2000);
+  }
+
+  function updateDelegatesPreview(delegates) {
+    const preview = document.getElementById('delegates-preview');
+    preview.innerHTML = '';
+    delegates.forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'del-chip ' + (d.isHost ? 'you' : '');
+      el.innerHTML = `<div class="del-dot"></div>${d.flag} ${d.country} ${d.isHost ? '(you)' : ''}`;
+      preview.appendChild(el);
+    });
+    // show remaining AI slots
+    const aiCount = Math.max(0, 4 - delegates.length);
+    for (let i = 0; i < aiCount; i++) {
+      const el = document.createElement('div');
+      el.className = 'del-chip ai';
+      el.innerHTML = `<div class="del-dot"></div>🤖 AI delegate`;
+      preview.appendChild(el);
+    }
+  }
+
+  async function joinMunRoom(code) {
+    const { data: room } = await sb.from('mun_rooms').select('*').eq('code', code).single();
+    if (!room) { alert('Room not found!'); return; }
+
+    // show country picker with available countries
+    selectedCommittee = room.committee;
+    selectedAgenda = room.agenda;
+    munRoomCode = code;
+
+    const existingCountries = (typeof room.delegates === 'string' ? JSON.parse(room.delegates) : room.delegates).map(d => d.country);
+    const pool = countryPool[room.committee] || countryPool['UNGA'];
+    const available = shuffle(pool.filter(c => !existingCountries.includes(c.name))).slice(0, 5);
+
+    const grid = document.getElementById('country-grid');
+    grid.innerHTML = '';
+    available.forEach(c => {
+      const el = document.createElement('div');
+      el.className = 'country-card';
+      el.innerHTML = `<div class="country-flag">${c.flag}</div><div class="country-name">${c.name}</div><div class="country-stance">${c.stance}</div>`;
+      el.onclick = async () => {
+        document.querySelectorAll('.country-card').forEach(x => x.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedCountry = c;
+        showBriefing(c);
+
+        // add this delegate to the room
+        const { data: latestRoom } = await sb.from('mun_rooms').select('*').eq('code', code).single();
+        const delegates = typeof latestRoom.delegates === 'string' ? JSON.parse(latestRoom.delegates) : latestRoom.delegates;
+        const myName = userProfile?.name || 'Delegate';
+        delegates.push({ name: myName, country: c.name, flag: c.flag, isUser: true, isHost: false });
+        await sb.from('mun_rooms').update({ delegates: JSON.stringify(delegates) }).eq('code', code);
+      };
+      grid.appendChild(el);
+    });
+
+    // override start button to launch from room
+    document.querySelector('#screen-country .btn-pink').onclick = () => launchRoomFromCode(code);
+    showScreen('screen-country');
+  }
+
+  async function launchRoomFromCode(code) {
+    if (!selectedCountry) { showMsg('msg-country', 'please pick a country!', 'error'); return; }
+    const { data: room } = await sb.from('mun_rooms').select('*').eq('code', code).single();
+    const realDelegates = typeof room.delegates === 'string' ? JSON.parse(room.delegates) : room.delegates;
+    // mark me as the current user
+    realDelegates.forEach(d => { if (d.country === selectedCountry.name) d.isCurrentUser = true; });
+    buildDelegatesFromRoom(realDelegates);
+    launchRoom();
+  }
+
+  function buildDelegatesFromRoom(realDelegates) {
+    const pool = countryPool[selectedCommittee] || countryPool['UNGA'];
+    const usedCountries = realDelegates.map(d => d.country);
+    const aiPool = shuffle(pool.filter(c => !usedCountries.includes(c.name)));
+    const aiNeeded = Math.max(0, 5 - realDelegates.length);
+
+    // mark which one is the current user
+    const processed = realDelegates.map(d => ({
+      ...d,
+      isUser: d.isHost || d.isCurrentUser || d.country === selectedCountry?.name
+    }));
+
+    const aiDelegates = aiPool.slice(0, aiNeeded).map(c => ({
+      name: 'AI Delegate', country: c.name, flag: c.flag, isUser: false, data: c
+    }));
+
+    allDelegates = shuffle([...processed, ...aiDelegates]);
+  }
+
+  function launchRoom() {
+    if (roomPollInterval) clearInterval(roomPollInterval);
+    if (allDelegates.length === 0) buildDelegates();
 
     document.getElementById('rh-committee').textContent = selectedCommittee;
     document.getElementById('rh-agenda').textContent = selectedAgenda;
@@ -845,14 +990,28 @@
 
   function copyLink() {
     const val = document.getElementById('share-link-input').value;
-    navigator.clipboard.writeText(val).catch(() => {
+    const btn = document.querySelector('.copy-btn');
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(val).then(() => {
+        btn.textContent = 'copied!'; setTimeout(() => btn.textContent = 'copy', 2000);
+      });
+    } else {
       const ta = document.createElement('textarea');
-      ta.value = val; document.body.appendChild(ta);
-      ta.select(); document.execCommand('copy');
+      ta.value = val; ta.style.cssText = 'position:fixed;left:-9999px;opacity:0;';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      try { document.execCommand('copy'); btn.textContent = 'copied!'; setTimeout(() => btn.textContent = 'copy', 2000); }
+      catch(e) { window.prompt('Copy this link:', val); }
       document.body.removeChild(ta);
-    });
-    document.querySelector('.copy-btn').textContent = 'copied!';
-    setTimeout(() => document.querySelector('.copy-btn').textContent = 'copy', 2000);
+    }
+  }
+
+  // check URL for room code on load
+  const urlMunParams = new URLSearchParams(window.location.search);
+  const munRoomParam = urlMunParams.get('room');
+  if (munRoomParam) {
+    document.addEventListener('DOMContentLoaded', () => {});
+    // wait for init then join
+    setTimeout(() => joinMunRoom(munRoomParam.toUpperCase()), 800);
   }
 </script>
 </body>
