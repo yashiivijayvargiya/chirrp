@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chirrp — MUN simulation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Quicksand', sans-serif; background: #FEF0F5; color: #2A1A2E; min-height: 100vh; }
+
+    nav { background: #fff; border-bottom: 2px solid #F0D0E4; padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .logo { font-family: 'Righteous', cursive; font-size: 26px; color: #D63384; text-decoration: none; }
+    .logo span { color: #3AAFE0; }
+    .nav-back { font-size: 13px; font-weight: 700; color: #aaa; text-decoration: none; }
+    .nav-back:hover { color: #D63384; }
+
+    main { max-width: 760px; margin: 0 auto; padding: 32px 24px; }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* COMMON */
+    .eyebrow { font-size: 11px; font-weight: 700; color: #D63384; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+    .page-title { font-family: 'Righteous', cursive; font-size: 32px; color: #2A1A2E; text-align: center; margin-bottom: 6px; }
+    .page-sub { font-size: 14px; color: #aaa; text-align: center; margin-bottom: 32px; line-height: 1.7; }
+    .card { background: #fff; border: 2px solid #F0D0E4; border-radius: 16px; padding: 22px; margin-bottom: 16px; }
+    .card-label { font-size: 11px; font-weight: 700; color: #D63384; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+    .card-title { font-family: 'Righteous', cursive; font-size: 20px; color: #2A1A2E; margin-bottom: 6px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .form-group label { font-size: 12px; font-weight: 700; color: #2A1A2E; letter-spacing: 0.5px; }
+    .form-group select, .form-group input { padding: 12px 14px; border: 2px solid #F0D0E4; border-radius: 12px; font-size: 13px; font-family: 'Quicksand', sans-serif; font-weight: 500; color: #2A1A2E; background: #fff; outline: none; transition: border-color 0.2s; }
+    .form-group select:focus, .form-group input:focus { border-color: #D63384; }
+    .btn-pink { width: 100%; background: #D63384; color: #fff; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; padding: 14px; border-radius: 14px; border: none; cursor: pointer; transition: background 0.2s; }
+    .btn-pink:hover { background: #c0226e; }
+    .btn-pink:disabled { background: #F0A0C4; cursor: not-allowed; }
+    .btn-blue { width: 100%; background: #3AAFE0; color: #fff; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; padding: 14px; border-radius: 14px; border: none; cursor: pointer; }
+    .btn-blue:hover { background: #2290be; }
+    .msg { padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-bottom: 12px; display: none; }
+    .msg.error { background: #FEE8F0; color: #c0226e; border: 1.5px solid #F0A0C4; display: block; }
+    .msg.info { background: #EBF7FD; color: #1A7FAA; border: 1.5px solid #B8E4F5; display: block; }
+    .chip { display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 10px; letter-spacing: 1px; }
+    .chip.pink { background: #FEF0F5; color: #D63384; }
+    .chip.blue { background: #EBF7FD; color: #1A7FAA; }
+    .chip.dark { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+
+    /* ── SCREEN 1: SETUP ── */
+    .committee-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .com-card { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 16px; cursor: pointer; transition: all 0.18s; }
+    .com-card:hover { border-color: #D63384; }
+    .com-card.selected { background: #FEF0F5; border-color: #D63384; }
+    .com-icon { font-size: 24px; margin-bottom: 6px; }
+    .com-name { font-size: 13px; font-weight: 700; color: #2A1A2E; margin-bottom: 3px; }
+    .com-full { font-size: 11px; color: #aaa; }
+
+    .agenda-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .agenda-opt { background: #fff; border: 2px solid #F0D0E4; border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all 0.18s; font-size: 13px; font-weight: 600; color: #2A1A2E; }
+    .agenda-opt:hover { border-color: #D63384; color: #D63384; }
+    .agenda-opt.selected { background: #FEF0F5; border-color: #D63384; color: #D63384; }
+
+    .mode-row { display: flex; gap: 12px; margin-bottom: 16px; }
+    .mode-card { flex: 1; background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 14px; text-align: center; cursor: pointer; transition: all 0.18s; }
+    .mode-card:hover { border-color: #D63384; }
+    .mode-card.selected { background: #FEF0F5; border-color: #D63384; }
+    .mode-icon { font-size: 22px; margin-bottom: 5px; }
+    .mode-name { font-size: 13px; font-weight: 700; color: #2A1A2E; }
+    .mode-desc { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+    /* ── SCREEN 2: COUNTRY PICK ── */
+    .country-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .country-card { background: #fff; border: 2px solid #F0D0E4; border-radius: 12px; padding: 14px 10px; text-align: center; cursor: pointer; transition: all 0.18s; }
+    .country-card:hover { border-color: #D63384; transform: translateY(-2px); }
+    .country-card.selected { background: #FEF0F5; border-color: #D63384; box-shadow: 0 0 0 3px rgba(214,51,132,0.1); }
+    .country-flag { font-size: 32px; margin-bottom: 6px; }
+    .country-name { font-size: 13px; font-weight: 700; color: #2A1A2E; margin-bottom: 2px; }
+    .country-stance { font-size: 11px; color: #aaa; line-height: 1.4; }
+
+    .briefing-card { background: #2A1A2E; border-radius: 16px; padding: 22px; margin-bottom: 16px; }
+    .bc-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .bc-flag { font-size: 36px; }
+    .bc-info {}
+    .bc-country { font-family: 'Righteous', cursive; font-size: 20px; color: #fff; }
+    .bc-committee { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .bc-section { margin-bottom: 12px; }
+    .bc-section-label { font-size: 10px; font-weight: 700; color: #F0A0C4; letter-spacing: 1px; margin-bottom: 5px; }
+    .bc-section-text { font-size: 13px; color: rgba(255,255,255,0.75); line-height: 1.65; }
+    .bc-points { display: flex; flex-direction: column; gap: 5px; }
+    .bc-point { font-size: 12px; color: rgba(255,255,255,0.65); padding-left: 12px; position: relative; line-height: 1.5; }
+    .bc-point::before { content: '•'; position: absolute; left: 0; color: #D63384; }
+
+    /* ── SCREEN 3: WAITING ── */
+    #waiting { display: none; text-align: center; padding: 50px 20px; }
+    .waiting-icon { font-size: 52px; margin-bottom: 14px; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+    .waiting-title { font-family: 'Righteous', cursive; font-size: 24px; color: #2A1A2E; margin-bottom: 6px; }
+    .waiting-sub { font-size: 13px; color: #aaa; margin-bottom: 20px; }
+    .share-box { background: #EBF7FD; border: 2px solid #B8E4F5; border-radius: 14px; padding: 14px 16px; max-width: 460px; margin: 0 auto 16px; }
+    .share-label { font-size: 11px; font-weight: 700; color: #1A7FAA; letter-spacing: 1px; margin-bottom: 8px; }
+    .share-row { display: flex; gap: 8px; }
+    .share-input { flex: 1; padding: 10px 12px; border: 1.5px solid #B8E4F5; border-radius: 10px; font-size: 12px; font-family: 'Quicksand', sans-serif; background: #fff; color: #2A1A2E; outline: none; }
+    .copy-btn { background: #3AAFE0; color: #fff; border: none; border-radius: 10px; padding: 10px 14px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'Quicksand', sans-serif; }
+    .delegates-preview { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+    .del-chip { background: #fff; border: 2px solid #F0D0E4; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 700; color: #2A1A2E; display: flex; align-items: center; gap: 6px; }
+    .del-chip.ai { border-color: #B8E4F5; color: #3AAFE0; background: #EBF7FD; }
+    .del-chip.you { border-color: #D63384; color: #D63384; background: #FEF0F5; }
+    .del-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .start-anyway-btn { background: #D63384; color: #fff; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; padding: 11px 24px; border-radius: 14px; border: none; cursor: pointer; margin-top: 12px; }
+
+    /* ── SCREEN 4: COMMITTEE ROOM ── */
+    .room-header { background: #2A1A2E; border-radius: 16px; padding: 18px 22px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; }
+    .rh-left {}
+    .rh-committee { font-size: 11px; font-weight: 700; color: #F0A0C4; letter-spacing: 1px; margin-bottom: 4px; }
+    .rh-agenda { font-family: 'Righteous', cursive; font-size: 16px; color: #fff; line-height: 1.35; max-width: 400px; }
+    .rh-phase { text-align: right; }
+    .rh-phase-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); letter-spacing: 1px; }
+    .rh-phase-name { font-family: 'Righteous', cursive; font-size: 15px; color: #3AAFE0; }
+
+    .delegates-row { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+    .del-badge { background: #fff; border: 2px solid #F0D0E4; border-radius: 10px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; flex: 1; min-width: 120px; }
+    .del-badge.speaking { border-color: #D63384; background: #FEF0F5; }
+    .del-badge.speaking-blue { border-color: #3AAFE0; background: #EBF7FD; }
+    .del-flag { font-size: 18px; }
+    .del-info {}
+    .del-cname { font-size: 12px; font-weight: 700; color: #2A1A2E; }
+    .del-type { font-size: 10px; color: #aaa; font-weight: 600; }
+    .del-mic { font-size: 14px; margin-left: auto; }
+
+    /* SPEECH FEED */
+    .feed-section { margin-bottom: 18px; }
+    .feed-label { font-size: 11px; font-weight: 700; color: #D63384; letter-spacing: 1.5px; margin-bottom: 10px; }
+    .feed { display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto; padding-right: 4px; }
+    .feed-entry { border-radius: 12px; padding: 12px 14px; }
+    .feed-entry.user { background: #FEF0F5; border: 2px solid #F0D0E4; border-left: 4px solid #D63384; }
+    .feed-entry.ai { background: #EBF7FD; border: 2px solid #EBF7FD; border-left: 4px solid #3AAFE0; }
+    .fe-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+    .fe-flag { font-size: 16px; }
+    .fe-name { font-size: 12px; font-weight: 700; color: #2A1A2E; }
+    .fe-phase { font-size: 10px; color: #aaa; font-weight: 600; margin-left: auto; }
+    .fe-text { font-size: 13px; color: #2A1A2E; line-height: 1.65; }
+
+    /* TIMER + CONTROLS */
+    .controls-section { background: #fff; border: 2px solid #F0D0E4; border-radius: 16px; padding: 18px; }
+    .cs-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .cs-turn { font-size: 13px; font-weight: 700; color: #2A1A2E; }
+    .cs-timer { font-family: 'Righteous', cursive; font-size: 28px; color: #D63384; }
+    .cs-timer.blue { color: #3AAFE0; }
+    .waveform { display: flex; align-items: center; gap: 3px; height: 32px; margin-bottom: 12px; justify-content: center; }
+    .wave-bar { width: 4px; border-radius: 2px; background: #D63384; opacity: 0.2; }
+    .waveform.active .wave-bar { animation: wave 0.8s ease-in-out infinite; opacity: 0.7; }
+    @keyframes wave { 0%,100%{height:4px;} 50%{height:26px;} }
+    .cs-btns { display: flex; gap: 10px; }
+    .cs-btn { flex: 1; padding: 12px; border-radius: 12px; border: none; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .cs-btn.record { background: #D63384; color: #fff; }
+    .cs-btn.record:hover { background: #c0226e; }
+    .cs-btn.stop { background: #2A1A2E; color: #fff; }
+    .cs-btn.next { background: #3AAFE0; color: #fff; }
+    .cs-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .cs-note { font-size: 12px; color: #aaa; text-align: center; margin-top: 10px; font-weight: 600; }
+
+    .phase-banner { border-radius: 12px; padding: 12px 16px; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+    .phase-banner.opening { background: #FEF0F5; border: 2px solid #F0D0E4; }
+    .phase-banner.caucus { background: #EBF7FD; border: 2px solid #B8E4F5; }
+    .pb-icon { font-size: 20px; }
+    .pb-text {}
+    .pb-name { font-size: 13px; font-weight: 700; color: #2A1A2E; }
+    .pb-desc { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+    /* ── SCREEN 5: DONE ── */
+    .done-wrap { text-align: center; }
+    .done-icon { font-size: 60px; margin-bottom: 14px; }
+    .done-title { font-family: 'Righteous', cursive; font-size: 30px; color: #2A1A2E; margin-bottom: 6px; }
+    .done-sub { font-size: 14px; color: #aaa; margin-bottom: 28px; }
+    .done-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 24px; }
+    .ds-card { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 16px; text-align: center; }
+    .ds-num { font-family: 'Righteous', cursive; font-size: 28px; color: #D63384; }
+    .ds-lbl { font-size: 11px; font-weight: 700; color: #aaa; margin-top: 3px; }
+    .speeches-recap { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 18px; margin-bottom: 20px; text-align: left; }
+    .sr-title { font-size: 12px; font-weight: 700; color: #D63384; letter-spacing: 1px; margin-bottom: 12px; }
+    .sr-row { padding: 8px 0; border-bottom: 1px solid #F0D0E4; font-size: 13px; color: #2A1A2E; display: flex; align-items: center; gap: 8px; }
+    .sr-row:last-child { border-bottom: none; }
+    .done-btns { display: flex; gap: 12px; }
+    .btn-dash { flex: 1; background: #D63384; color: #fff; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; padding: 13px; border-radius: 14px; border: none; cursor: pointer; }
+    .btn-again { flex: 1; background: transparent; color: #D63384; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; padding: 13px; border-radius: 14px; border: 2px solid #D63384; cursor: pointer; }
+
+    @media (max-width: 500px) {
+      .committee-grid { grid-template-columns: 1fr; }
+      .country-grid { grid-template-columns: 1fr 1fr; }
+      .done-stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">chir<span>rp</span></a>
+  <a href="dashboard.html" class="nav-back">← dashboard</a>
+</nav>
+
+<main>
+
+  <!-- SCREEN 1: SETUP -->
+  <div class="screen active" id="screen-setup">
+    <div class="eyebrow">MUN simulation</div>
+    <h1 class="page-title">enter the committee ✦</h1>
+    <p class="page-sub">pick your committee, choose an agenda, get assigned a country, and practice your speeches. AI delegates fill the remaining seats.</p>
+
+    <div id="msg-setup" class="msg"></div>
+
+    <div class="card">
+      <div class="card-label">step 1 — choose your committee</div>
+      <div class="committee-grid" id="committee-grid">
+        <div class="com-card selected" onclick="selectCommittee(this,'UNSC')">
+          <div class="com-icon">🛡️</div>
+          <div class="com-name">UNSC</div>
+          <div class="com-full">UN Security Council</div>
+        </div>
+        <div class="com-card" onclick="selectCommittee(this,'UNGA')">
+          <div class="com-icon">🌐</div>
+          <div class="com-name">UNGA</div>
+          <div class="com-full">UN General Assembly</div>
+        </div>
+        <div class="com-card" onclick="selectCommittee(this,'UNHRC')">
+          <div class="com-icon">⚖️</div>
+          <div class="com-name">UNHRC</div>
+          <div class="com-full">Human Rights Council</div>
+        </div>
+        <div class="com-card" onclick="selectCommittee(this,'UNEP')">
+          <div class="com-icon">🌱</div>
+          <div class="com-name">UNEP</div>
+          <div class="com-full">Environment Programme</div>
+        </div>
+        <div class="com-card" onclick="selectCommittee(this,'WHO')">
+          <div class="com-icon">🏥</div>
+          <div class="com-name">WHO</div>
+          <div class="com-full">World Health Organization</div>
+        </div>
+        <div class="com-card" onclick="selectCommittee(this,'ECOSOC')">
+          <div class="com-icon">📊</div>
+          <div class="com-name">ECOSOC</div>
+          <div class="com-full">Economic & Social Council</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="agenda-card">
+      <div class="card-label">step 2 — choose an agenda</div>
+      <div class="agenda-list" id="agenda-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">step 3 — committee size</div>
+      <div class="mode-row">
+        <div class="mode-card selected" id="mode-solo" onclick="selectMode('solo')">
+          <div class="mode-icon">🧑</div>
+          <div class="mode-name">Solo practice</div>
+          <div class="mode-desc">just you + AI delegates</div>
+        </div>
+        <div class="mode-card" id="mode-group" onclick="selectMode('group')">
+          <div class="mode-icon">👥</div>
+          <div class="mode-name">Small committee</div>
+          <div class="mode-desc">invite 1-4 friends + AI fills the rest</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" id="delegate-name-group">
+      <label>YOUR DELEGATE NAME (optional — leave blank to use your profile name)</label>
+      <input type="text" id="delegate-name-input" placeholder="e.g. Delegate Sharma" />
+    </div>
+
+    <button class="btn-pink" onclick="proceedToCountry()">pick my country →</button>
+  </div>
+
+  <!-- SCREEN 2: COUNTRY + BRIEFING -->
+  <div class="screen" id="screen-country">
+    <div class="eyebrow">country assignment</div>
+    <h1 class="page-title">choose your country ✦</h1>
+    <p class="page-sub">5 countries randomly assigned to your committee. pick the one you want to represent.</p>
+
+    <div id="msg-country" class="msg"></div>
+    <div class="country-grid" id="country-grid"></div>
+
+    <div id="briefing-wrap" style="display:none;">
+      <div class="briefing-card" id="briefing-card"></div>
+      <button class="btn-pink" onclick="startSimulation()">enter the committee room ✦</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: WAITING (group mode) -->
+  <div class="screen" id="screen-waiting">
+    <div style="text-align:center;padding:50px 20px;">
+      <div class="waiting-icon">🌐</div>
+      <div class="waiting-title">committee forming...</div>
+      <div class="waiting-sub">share the link — friends join as delegates, AI fills remaining seats</div>
+      <div class="share-box">
+        <div class="share-label">COMMITTEE LINK</div>
+        <div class="share-row">
+          <input class="share-input" id="share-link-input" readonly />
+          <button class="copy-btn" onclick="copyLink()">copy</button>
+        </div>
+      </div>
+      <div class="delegates-preview" id="delegates-preview"></div>
+      <button class="start-anyway-btn" onclick="startSimulation()">start with AI delegates ✦</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: COMMITTEE ROOM -->
+  <div class="screen" id="screen-room">
+    <div class="room-header">
+      <div class="rh-left">
+        <div class="rh-committee" id="rh-committee">UNSC</div>
+        <div class="rh-agenda" id="rh-agenda">agenda</div>
+      </div>
+      <div class="rh-phase">
+        <div class="rh-phase-label">PHASE</div>
+        <div class="rh-phase-name" id="rh-phase">Opening Speeches</div>
+      </div>
+    </div>
+
+    <div class="delegates-row" id="delegates-row"></div>
+
+    <div class="phase-banner opening" id="phase-banner">
+      <div class="pb-icon">📜</div>
+      <div class="pb-text">
+        <div class="pb-name">Opening Speeches</div>
+        <div class="pb-desc">each delegate presents their country's position on the agenda — 90 seconds each</div>
+      </div>
+    </div>
+
+    <div class="feed-section">
+      <div class="feed-label">COMMITTEE FLOOR</div>
+      <div class="feed" id="speech-feed">
+        <div style="text-align:center;font-size:13px;color:#ccc;padding:20px;">the committee is called to order. speeches will appear here ✦</div>
+      </div>
+    </div>
+
+    <div class="controls-section">
+      <div class="cs-top">
+        <div class="cs-turn" id="cs-turn">your turn to speak</div>
+        <div class="cs-timer" id="cs-timer">1:30</div>
+      </div>
+      <div class="waveform" id="cs-waveform">
+        <div class="wave-bar" style="animation-delay:0s"></div>
+        <div class="wave-bar" style="animation-delay:0.1s"></div>
+        <div class="wave-bar" style="animation-delay:0.2s"></div>
+        <div class="wave-bar" style="animation-delay:0.3s"></div>
+        <div class="wave-bar" style="animation-delay:0.4s"></div>
+        <div class="wave-bar" style="animation-delay:0.5s"></div>
+        <div class="wave-bar" style="animation-delay:0.6s"></div>
+        <div class="wave-bar" style="animation-delay:0.7s"></div>
+        <div class="wave-bar" style="animation-delay:0.4s"></div>
+        <div class="wave-bar" style="animation-delay:0.2s"></div>
+        <div class="wave-bar" style="animation-delay:0s"></div>
+        <div class="wave-bar" style="animation-delay:0.3s"></div>
+      </div>
+      <div class="cs-btns">
+        <button class="cs-btn record" id="btn-record" onclick="startSpeech()">🎙 record speech</button>
+        <button class="cs-btn stop" id="btn-stop" onclick="stopSpeech()" disabled>⏹ done speaking</button>
+        <button class="cs-btn next" id="btn-next" onclick="nextSpeaker()" style="display:none;">next speaker →</button>
+      </div>
+      <div class="cs-note" id="cs-note">record your opening statement — state your country's position clearly</div>
+    </div>
+  </div>
+
+  <!-- SCREEN 5: DONE -->
+  <div class="screen" id="screen-done">
+    <div class="done-wrap">
+      <div class="done-icon">🎖️</div>
+      <div class="done-title">session adjourned ✦</div>
+      <div class="done-sub">well done, delegate. your committee has concluded its session.</div>
+      <div class="done-stats">
+        <div class="ds-card"><div class="ds-num" id="done-speeches">0</div><div class="ds-lbl">speeches made</div></div>
+        <div class="ds-card"><div class="ds-num" id="done-phase">—</div><div class="ds-lbl">phases completed</div></div>
+        <div class="ds-card"><div class="ds-num" id="done-xp" style="color:#3AAFE0;">+0</div><div class="ds-lbl">xp earned</div></div>
+      </div>
+      <div class="speeches-recap" id="speeches-recap">
+        <div class="sr-title">YOUR SPEECHES THIS SESSION</div>
+      </div>
+      <div class="done-btns">
+        <button class="btn-dash" onclick="window.location.href='dashboard.html'">dashboard</button>
+        <button class="btn-again" onclick="location.reload()">new session</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  const { createClient } = supabase;
+  const sb = createClient(
+    'https://mkjhrlsxmakbnxqrrvlu.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ramhybHN4bWFrYm54cXJydmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNjcyNTMsImV4cCI6MjA5Njk0MzI1M30.fH_ZoJPYnNGwHX6gPELYIIApe9EzZt6SYlb8wPMeMtI'
+  );
+
+  // ── DATA ──
+  const committees = {
+    UNSC: {
+      agendas: [
+        "The situation in Ukraine and threats to international peace",
+        "Addressing the proliferation of nuclear weapons in East Asia",
+        "The humanitarian crisis in Gaza and ceasefire negotiations",
+        "Combating terrorism and non-state armed groups",
+        "The Sudan conflict and regional stability in Africa"
+      ]
+    },
+    UNGA: {
+      agendas: [
+        "Reforming the global financial system for developing nations",
+        "The role of technology in achieving sustainable development goals",
+        "Addressing the global refugee and displacement crisis",
+        "Strengthening multilateralism in a fragmented world",
+        "Climate finance and loss and damage for vulnerable nations"
+      ]
+    },
+    UNHRC: {
+      agendas: [
+        "Digital surveillance and the right to privacy",
+        "Human rights implications of climate change",
+        "The rights of minorities and indigenous peoples",
+        "Freedom of expression in the age of social media",
+        "Addressing statelessness and the right to nationality"
+      ]
+    },
+    UNEP: {
+      agendas: [
+        "Phasing out single-use plastics globally",
+        "Protecting ocean biodiversity and marine ecosystems",
+        "The global treaty on plastic pollution",
+        "Addressing desertification and land degradation",
+        "Financing the transition to renewable energy in the Global South"
+      ]
+    },
+    WHO: {
+      agendas: [
+        "Pandemic preparedness and a new international treaty",
+        "The global mental health crisis and access to care",
+        "Combating antimicrobial resistance",
+        "Equitable access to vaccines and medicines",
+        "Regulating artificial intelligence in healthcare"
+      ]
+    },
+    ECOSOC: {
+      agendas: [
+        "Reducing inequality within and among countries",
+        "The future of work in an automated economy",
+        "Financing sustainable urban development",
+        "Food security and the global hunger crisis",
+        "Promoting gender equality in economic participation"
+      ]
+    }
+  };
+
+  const countryPool = {
+    UNSC: [
+      { name: "USA", flag: "🇺🇸", stance: "Strong advocate for NATO allies, opposes Russian aggression, supports sanctions regimes.", position: "The United States believes in a rules-based international order and will use all diplomatic tools to maintain global stability. We support our allies unconditionally." },
+      { name: "Russia", flag: "🇷🇺", stance: "Opposes Western interventionism, uses veto power strategically, emphasises sovereignty.", position: "Russia categorically rejects Western interference in sovereign nations' affairs. We will not allow NATO expansion to threaten our security interests." },
+      { name: "China", flag: "🇨🇳", stance: "Non-interventionist stance, prioritises economic partnerships, strategic abstentions.", position: "China advocates for peaceful resolution through dialogue. We oppose unilateral sanctions and believe all nations deserve equal treatment under international law." },
+      { name: "France", flag: "🇫🇷", stance: "Supports multilateralism, EU solidarity, active in African security issues.", position: "France stands for the values of liberty and human dignity. We call upon all parties to respect international humanitarian law and engage in constructive dialogue." },
+      { name: "UK", flag: "🇬🇧", stance: "Close ally of USA, strong on sanctions, leads on human rights resolutions.", position: "The United Kingdom is committed to upholding the UN Charter. We support targeted accountability measures against those who violate international norms." },
+      { name: "India", flag: "🇮🇳", stance: "Strategic autonomy, often abstains, focuses on development and reform.", position: "India calls for peaceful resolution of all conflicts. As a non-permanent member, we advocate for greater representation of developing nations in global governance." },
+      { name: "Brazil", flag: "🇧🇷", stance: "Global South leadership, opposes Western dominance, peace-focused.", position: "Brazil believes in the peaceful settlement of disputes and the importance of multilateral institutions. We advocate for a reformed UN that represents all regions equally." },
+    ],
+    UNGA: [
+      { name: "Germany", flag: "🇩🇪", stance: "Pro-EU, strong on human rights, climate finance leader.", position: "Germany is committed to multilateralism and a green transition. We call for ambitious climate financing and reformed global institutions." },
+      { name: "South Africa", flag: "🇿🇦", stance: "G77 leadership, African Union voice, anti-colonialism.", position: "South Africa speaks for the Global South. We demand equitable access to resources and an end to the historical injustices of colonialism in global policy." },
+      { name: "Japan", flag: "🇯🇵", stance: "Technology-focused, pro-SDGs, strong on nuclear disarmament.", position: "Japan brings unique perspective as the only nation that has experienced nuclear devastation. We advocate for disarmament, technological cooperation and sustainable development." },
+      { name: "Saudi Arabia", flag: "🇸🇦", stance: "Defends oil economy, Islamic bloc leadership, strategic modernisation.", position: "Saudi Arabia is undergoing historic transformation. We support balanced energy transition that ensures energy security while respecting the developmental rights of all nations." },
+      { name: "Mexico", flag: "🇲🇽", stance: "Latin American bloc, migration rights, anti-interventionism.", position: "Mexico calls for humane migration policies and the right to development. We oppose all forms of unilateral coercive measures that harm civilian populations." },
+      { name: "Indonesia", flag: "🇮🇩", stance: "ASEAN leadership, moderate Muslim voice, development-focused.", position: "Indonesia as the world's largest Muslim democracy advocates for inclusive dialogue. We prioritise ASEAN centrality and South-South cooperation." },
+      { name: "Nigeria", flag: "🇳🇬", stance: "African Union, development financing, peacekeeping.", position: "Nigeria, as Africa's largest economy, calls for debt relief and increased development financing. Africa must have a permanent seat at the table where decisions affecting us are made." },
+    ],
+    UNHRC: [
+      { name: "Netherlands", flag: "🇳🇱", stance: "Strong human rights advocate, ICC supporter, digital rights.", position: "The Netherlands is uncompromising on human rights. We support universal jurisdiction for grave violations and call for accountability mechanisms with real enforcement power." },
+      { name: "Pakistan", flag: "🇵🇰", stance: "OIC bloc, Muslim minority rights, Kashmir issue.", position: "Pakistan advocates for the rights of Muslim minorities worldwide and the right to self-determination. We call for an end to double standards in the application of human rights principles." },
+      { name: "Venezuela", flag: "🇻🇪", stance: "Anti-imperialism, development rights, sovereignty focus.", position: "Venezuela rejects the weaponisation of human rights by Western powers. True human rights include the right to development, food, healthcare and self-determination." },
+      { name: "Sweden", flag: "🇸🇪", stance: "Feminist foreign policy, LGBTQ+ rights, transparency.", position: "Sweden's feminist foreign policy places gender equality at the centre of all resolutions. We will champion LGBTQ+ rights, women's rights and press freedom in all sessions." },
+      { name: "Egypt", flag: "🇪🇬", stance: "Arab League voice, sovereignty principle, regional stability.", position: "Egypt emphasises state sovereignty and non-interference in internal affairs. Human rights must be addressed in the context of cultural specificity and development stage." },
+    ],
+    UNEP: [
+      { name: "Norway", flag: "🇳🇴", stance: "Climate finance leader, ocean protection, green tech.", position: "Norway is a leading contributor to climate finance. We call for binding commitments on emissions reduction and full funding of the Loss and Damage facility." },
+      { name: "Bangladesh", flag: "🇧🇩", stance: "Climate vulnerable nation, adaptation finance, loss and damage.", position: "Bangladesh is on the frontlines of climate catastrophe despite contributing less than 0.5% of global emissions. We demand urgent, additional climate finance as a matter of survival." },
+      { name: "Australia", flag: "🇦🇺", stance: "Coal industry interests, Pacific leadership tensions, transition debate.", position: "Australia is committed to a responsible energy transition that ensures energy security. We support technology-neutral approaches and oppose prescriptive timelines." },
+      { name: "Kenya", flag: "🇰🇪", stance: "African climate voice, renewable energy, loss and damage.", position: "Kenya represents the African continent where climate impacts are most severe. We call for the developed world to honour climate finance pledges and deliver on technology transfer." },
+      { name: "Canada", flag: "🇨🇦", stance: "Progressive climate stance, Indigenous rights in environment.", position: "Canada is committed to reconciling economic development with environmental protection, including meaningful consultation with Indigenous communities in all environmental decisions." },
+    ],
+    WHO: [
+      { name: "USA", flag: "🇺🇸", stance: "Pharmaceutical IP protection, bilateral health security.", position: "The United States has contributed more to global health than any other nation. We support strong intellectual property protections that incentivise innovation and medical breakthroughs." },
+      { name: "India", flag: "🇮🇳", stance: "Generic medicines, pharmacy of the world, IP reform.", position: "India, the pharmacy of the world, calls for waiving IP protections during health emergencies. Access to affordable medicines is a fundamental human right, not a luxury." },
+      { name: "Cuba", flag: "🇨🇺", stance: "Medical cooperation, anti-privatisation of healthcare.", position: "Cuba has sent medical brigades to over 60 countries. We advocate for a health system model based on prevention, primary care, and solidarity — not profit." },
+      { name: "Germany", flag: "🇩🇪", stance: "Biotech leader, strong on pandemic preparedness.", position: "Germany, home to BioNTech, knows what public-private partnership can achieve. We support a pandemic treaty that balances sharing with sustainable incentives for research." },
+      { name: "China", flag: "🇨🇳", stance: "Health silk road, WHO reform, vaccine diplomacy.", position: "China has provided vaccines to over 120 countries. We support strengthening WHO capacity and oppose the politicisation of public health issues." },
+    ],
+    ECOSOC: [
+      { name: "USA", flag: "🇺🇸", stance: "Free market, private sector-led development.", position: "The United States believes in private sector-led economic growth. We support market-based solutions and oppose government overreach that stifles innovation and entrepreneurship." },
+      { name: "China", flag: "🇨🇳", stance: "BRI, South-South cooperation, infrastructure investment.", position: "China has lifted 800 million people out of poverty. Our Belt and Road Initiative is creating infrastructure that connects developing nations to global markets." },
+      { name: "Ethiopia", flag: "🇪🇹", stance: "Debt relief, development financing, African Union.", position: "Ethiopia and many African nations are caught in a debt trap that prevents development. We demand immediate debt restructuring and unconditional development financing." },
+      { name: "Sweden", flag: "🇸🇪", stance: "Social safety nets, gender equality in economics.", position: "Sweden advocates for strong social protection floors and gender-responsive economic policies. Inequality is not inevitable — it is a policy choice." },
+      { name: "Brazil", flag: "🇧🇷", stance: "Food security, South America development.", position: "Brazil as an agricultural powerhouse can feed the world, but only with fair trade rules. We oppose agricultural subsidies by wealthy nations that undermine our farmers." },
+    ]
+  };
+
+  const aiSpeeches = {
+    opening: [
+      "Honourable Chair, distinguished delegates — [COUNTRY] stands firm in its position on this critical agenda. Our nation has consistently advocated for multilateral cooperation as the only path forward. We urge all delegations to approach this debate with the spirit of compromise and shared responsibility.",
+      "Madam Chair, [COUNTRY] brings to this floor the concerns of millions of citizens who are directly affected by this agenda item. We call upon this committee to move beyond rhetoric and commit to actionable resolutions with concrete timelines and accountability mechanisms.",
+      "Mr. President, the delegation of [COUNTRY] believes that meaningful progress on this agenda requires honest acknowledgement of the failures of past resolutions. We must not repeat the mistakes of previous sessions. [COUNTRY] proposes a framework built on transparency, equity, and genuine partnership.",
+      "Distinguished Chair, [COUNTRY] aligns itself with the bloc of nations that have consistently prioritised the interests of the Global South. While developed nations debate timelines and frameworks, our citizens suffer the consequences. We demand urgent, concrete action.",
+      "Honourable delegates, [COUNTRY] welcomes this opportunity to address the committee. We have prepared a working paper that outlines our proposed framework. We invite all delegations, particularly those who share our concerns, to co-sponsor this document and advance our collective agenda."
+    ],
+    caucus: [
+      "Delegate from [COUNTRY] — on the matter raised by the previous speaker, we must note that this position ignores the structural inequalities that underpin this issue. A one-size-fits-all approach will not work here.",
+      "[COUNTRY] wishes to yield the floor for a point of information. Has the previous delegate considered the impact of this proposal on developing nations who lack the institutional capacity to implement such measures?",
+      "The delegation of [COUNTRY] strongly supports the working paper put forward by the bloc. We encourage all undecided delegations to study our proposal carefully. It represents a genuinely balanced approach.",
+      "[COUNTRY] must express concern about the direction of this debate. We risk leaving this session with a resolution that looks strong on paper but lacks any mechanism for real implementation.",
+      "Madam Chair, [COUNTRY] proposes a 15-minute unmoderated caucus to allow delegations to consult. The current debate has reached an impasse that informal consultation may resolve."
+    ]
+  };
+
+  // ── STATE ──
+  let selectedCommittee = 'UNSC';
+  let selectedAgenda = null;
+  let selectedMode = 'solo';
+  let selectedCountry = null;
+  let allDelegates = [];
+  let currentSpeakerIdx = 0;
+  let currentPhase = 'opening'; // opening | caucus
+  let openingSpeechIdx = 0;
+  let caucusRound = 0;
+  let mySpeeches = [];
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let timerInterval = null;
+  let userId = null;
+  let userProfile = null;
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'signup.html'; return; }
+    userId = session.user.id;
+    const { data: p } = await sb.from('profiles').select('*').eq('id', userId).single();
+    userProfile = p;
+    loadAgendas('UNSC');
+  }
+  init();
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  function selectCommittee(el, name) {
+    document.querySelectorAll('.com-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedCommittee = name;
+    selectedAgenda = null;
+    loadAgendas(name);
+  }
+
+  function loadAgendas(committee) {
+    const list = document.getElementById('agenda-list');
+    list.innerHTML = '';
+    committees[committee].agendas.forEach((a, i) => {
+      const el = document.createElement('div');
+      el.className = 'agenda-opt';
+      el.textContent = a;
+      el.onclick = () => {
+        document.querySelectorAll('.agenda-opt').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedAgenda = a;
+      };
+      list.appendChild(el);
+    });
+  }
+
+  function selectMode(mode) {
+    selectedMode = mode;
+    ['solo','group'].forEach(m => document.getElementById('mode-'+m).classList.remove('selected'));
+    document.getElementById('mode-'+mode).classList.add('selected');
+  }
+
+  function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+  function proceedToCountry() {
+    if (!selectedAgenda) { showMsg('msg-setup', 'please select an agenda first!', 'error'); return; }
+    const pool = countryPool[selectedCommittee] || countryPool['UNGA'];
+    const picked = shuffle(pool).slice(0, 5);
+    const grid = document.getElementById('country-grid');
+    grid.innerHTML = '';
+    picked.forEach(c => {
+      const el = document.createElement('div');
+      el.className = 'country-card';
+      el.innerHTML = `<div class="country-flag">${c.flag}</div><div class="country-name">${c.name}</div><div class="country-stance">${c.stance}</div>`;
+      el.onclick = () => {
+        document.querySelectorAll('.country-card').forEach(x => x.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedCountry = c;
+        showBriefing(c);
+      };
+      grid.appendChild(el);
+    });
+    showScreen('screen-country');
+  }
+
+  function showBriefing(c) {
+    document.getElementById('briefing-wrap').style.display = 'block';
+    document.getElementById('briefing-card').innerHTML = `
+      <div class="bc-header">
+        <div class="bc-flag">${c.flag}</div>
+        <div class="bc-info">
+          <div class="bc-country">Delegate of ${c.name}</div>
+          <div class="bc-committee">${selectedCommittee} · ${selectedAgenda}</div>
+        </div>
+      </div>
+      <div class="bc-section">
+        <div class="bc-section-label">YOUR COUNTRY'S POSITION</div>
+        <div class="bc-section-text">${c.position}</div>
+      </div>
+      <div class="bc-section">
+        <div class="bc-section-label">YOUR STANCE</div>
+        <div class="bc-section-text">${c.stance}</div>
+      </div>
+      <div class="bc-section">
+        <div class="bc-section-label">TIPS FOR YOUR SPEECH</div>
+        <div class="bc-points">
+          <div class="bc-point">Open with "Honourable Chair, distinguished delegates..."</div>
+          <div class="bc-point">State your country's position clearly in the first 20 seconds</div>
+          <div class="bc-point">Give 2 reasons or examples that support your stance</div>
+          <div class="bc-point">Mention one proposal or call to action</div>
+          <div class="bc-point">Close with "I thank the Chair" or "The delegation yields the floor"</div>
+        </div>
+      </div>`;
+    document.getElementById('briefing-wrap').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text; el.className = 'msg ' + type; el.style.display = 'block';
+  }
+
+  function buildDelegates() {
+    const delegateName = document.getElementById('delegate-name-input').value.trim()
+      || (userProfile?.name || 'You');
+    const pool = countryPool[selectedCommittee] || countryPool['UNGA'];
+    const others = shuffle(pool.filter(c => c.name !== selectedCountry.name)).slice(0, 4);
+
+    allDelegates = [
+      { name: delegateName, country: selectedCountry.name, flag: selectedCountry.flag, isUser: true },
+      ...others.map(c => ({ name: 'AI Delegate', country: c.name, flag: c.flag, isUser: false, position: c.position, data: c }))
+    ];
+    allDelegates = shuffle(allDelegates);
+  }
+
+  function startSimulation() {
+    if (!selectedCountry) { showMsg('msg-country', 'please pick a country!', 'error'); return; }
+    buildDelegates();
+
+    document.getElementById('rh-committee').textContent = selectedCommittee;
+    document.getElementById('rh-agenda').textContent = selectedAgenda;
+
+    renderDelegates();
+    currentSpeakerIdx = 0;
+    currentPhase = 'opening';
+    showScreen('screen-room');
+    loadTurn();
+  }
+
+  function renderDelegates() {
+    const row = document.getElementById('delegates-row');
+    row.innerHTML = '';
+    allDelegates.forEach((d, i) => {
+      const el = document.createElement('div');
+      el.className = 'del-badge' + (i === currentSpeakerIdx ? (d.isUser ? ' speaking' : ' speaking-blue') : '');
+      el.id = 'del-badge-' + i;
+      el.innerHTML = `<div class="del-flag">${d.flag}</div><div class="del-info"><div class="del-cname">${d.country}</div><div class="del-type">${d.isUser ? 'you ✦' : 'AI delegate'}</div></div><div class="del-mic">${i === currentSpeakerIdx ? '🎙' : ''}</div>`;
+      row.appendChild(el);
+    });
+  }
+
+  function loadTurn() {
+    const speaker = allDelegates[currentSpeakerIdx];
+    renderDelegates();
+
+    const timeSecs = currentPhase === 'opening' ? 90 : 60;
+    const m = Math.floor(timeSecs / 60), s = (timeSecs % 60).toString().padStart(2,'0');
+    document.getElementById('cs-timer').textContent = m + ':' + s;
+    document.getElementById('cs-timer').className = 'cs-timer' + (speaker.isUser ? '' : ' blue');
+
+    if (speaker.isUser) {
+      document.getElementById('cs-turn').textContent = `your turn — ${currentPhase === 'opening' ? 'opening statement' : 'moderated caucus speech'} as ${speaker.flag} ${speaker.country}`;
+      document.getElementById('btn-record').style.display = 'block';
+      document.getElementById('btn-stop').style.display = 'block';
+      document.getElementById('btn-next').style.display = 'none';
+      document.getElementById('btn-record').disabled = false;
+      document.getElementById('btn-stop').disabled = true;
+      document.getElementById('cs-note').textContent = currentPhase === 'opening'
+        ? 'state your position clearly — you have 90 seconds'
+        : 'respond to the debate — make a specific point in 60 seconds';
+    } else {
+      document.getElementById('cs-turn').textContent = `${speaker.flag} ${speaker.country} is speaking...`;
+      document.getElementById('btn-record').style.display = 'none';
+      document.getElementById('btn-stop').style.display = 'none';
+      document.getElementById('btn-next').style.display = 'block';
+      document.getElementById('cs-note').textContent = 'listen carefully — then respond in your turn';
+      showAISpeech(speaker);
+    }
+  }
+
+  function showAISpeech(speaker) {
+    const pool = currentPhase === 'opening' ? aiSpeeches.opening : aiSpeeches.caucus;
+    const template = pool[Math.floor(Math.random() * pool.length)];
+    const text = template.replace(/\[COUNTRY\]/g, speaker.country);
+    addToFeed(speaker, text, currentPhase === 'opening' ? 'Opening Statement' : 'Mod Caucus');
+
+    // auto-timer for AI
+    let remaining = currentPhase === 'opening' ? 90 : 60;
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      remaining--;
+      const m = Math.floor(remaining / 60), s = (remaining % 60).toString().padStart(2,'0');
+      document.getElementById('cs-timer').textContent = m + ':' + s;
+      if (remaining <= 0) clearInterval(timerInterval);
+    }, 1000);
+  }
+
+  function addToFeed(speaker, text, phase) {
+    const feed = document.getElementById('speech-feed');
+    if (feed.children[0] && feed.children[0].style.textAlign === 'center') feed.innerHTML = '';
+    const el = document.createElement('div');
+    el.className = 'feed-entry ' + (speaker.isUser ? 'user' : 'ai');
+    el.innerHTML = `<div class="fe-meta"><span class="fe-flag">${speaker.flag}</span><span class="fe-name">${speaker.country} ${speaker.isUser ? '(you)' : '(AI)'}</span><span class="fe-phase">${phase}</span></div><div class="fe-text">${text}</div>`;
+    feed.appendChild(el);
+    feed.scrollTop = feed.scrollHeight;
+  }
+
+  async function startSpeech() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+        const speaker = allDelegates[currentSpeakerIdx];
+        const phase = currentPhase === 'opening' ? 'Opening Statement' : 'Mod Caucus';
+        addToFeed(speaker, '[🎙 your recorded speech — ' + (currentPhase === 'opening' ? '90s' : '60s') + ' · play back below]', phase);
+        mySpeeches.push({ phase, country: speaker.country, flag: speaker.flag, blob });
+
+        document.getElementById('btn-record').style.display = 'none';
+        document.getElementById('btn-stop').style.display = 'none';
+        document.getElementById('btn-next').style.display = 'block';
+        document.getElementById('cs-note').textContent = 'great speech! move to the next speaker when ready.';
+      };
+      mediaRecorder.start();
+      document.getElementById('btn-record').disabled = true;
+      document.getElementById('btn-stop').disabled = false;
+      document.getElementById('cs-waveform').classList.add('active');
+      document.getElementById('cs-note').textContent = 'recording... speak clearly into your mic 🎙';
+
+      let remaining = currentPhase === 'opening' ? 90 : 60;
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        remaining--;
+        const m = Math.floor(remaining / 60), s = (remaining % 60).toString().padStart(2,'0');
+        document.getElementById('cs-timer').textContent = m + ':' + s;
+        if (remaining <= 0) { clearInterval(timerInterval); stopSpeech(); }
+      }, 1000);
+    } catch(e) {
+      document.getElementById('cs-note').textContent = 'microphone access needed — please allow mic in browser settings';
+    }
+  }
+
+  function stopSpeech() {
+    clearInterval(timerInterval);
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    }
+    document.getElementById('cs-waveform').classList.remove('active');
+  }
+
+  function nextSpeaker() {
+    clearInterval(timerInterval);
+    currentSpeakerIdx++;
+
+    if (currentSpeakerIdx >= allDelegates.length) {
+      // phase complete
+      if (currentPhase === 'opening') {
+        // move to mod caucus
+        currentPhase = 'caucus';
+        currentSpeakerIdx = 0;
+        document.getElementById('rh-phase').textContent = 'Moderated Caucus';
+        document.getElementById('phase-banner').className = 'phase-banner caucus';
+        document.getElementById('phase-banner').innerHTML = '<div class="pb-icon">💬</div><div class="pb-text"><div class="pb-name">Moderated Caucus</div><div class="pb-desc">delegates respond to the debate — make specific arguments and counterpoints in 60 seconds each</div></div>';
+        caucusRound++;
+        loadTurn();
+      } else {
+        // end simulation after 1 caucus round
+        endSimulation();
+      }
+    } else {
+      loadTurn();
+    }
+  }
+
+  async function endSimulation() {
+    clearInterval(timerInterval);
+    const xp = mySpeeches.length * 60;
+
+    document.getElementById('done-speeches').textContent = mySpeeches.length;
+    document.getElementById('done-phase').textContent = currentPhase === 'caucus' ? '2/2' : '1/2';
+    document.getElementById('done-xp').textContent = '+' + xp;
+
+    const recap = document.getElementById('speeches-recap');
+    recap.innerHTML = '<div class="sr-title">YOUR SPEECHES THIS SESSION</div>';
+    if (mySpeeches.length === 0) {
+      recap.innerHTML += '<div class="sr-row">no speeches recorded this session</div>';
+    } else {
+      mySpeeches.forEach((s, i) => {
+        const el = document.createElement('div');
+        el.className = 'sr-row';
+        el.innerHTML = `<span>${s.flag}</span><span style="flex:1;font-weight:700;">${s.country}</span><span style="color:#aaa;">${s.phase}</span>`;
+        recap.appendChild(el);
+      });
+    }
+
+    if (userId) {
+      await sb.from('mun_sessions').insert({
+        user_id: userId,
+        committee: selectedCommittee,
+        agenda: selectedAgenda,
+        country: selectedCountry.name,
+        speeches_made: mySpeeches.length,
+        phases_completed: currentPhase === 'caucus' ? 2 : 1,
+        xp_earned: xp,
+        created_at: new Date().toISOString()
+      });
+      const newXP = (userProfile?.xp || 0) + xp;
+      await sb.from('profiles').update({ xp: newXP }).eq('id', userId);
+    }
+
+    showScreen('screen-done');
+  }
+
+  function copyLink() {
+    const val = document.getElementById('share-link-input').value;
+    navigator.clipboard.writeText(val).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = val; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+    });
+    document.querySelector('.copy-btn').textContent = 'copied!';
+    setTimeout(() => document.querySelector('.copy-btn').textContent = 'copy', 2000);
+  }
+</script>
+</body>
+</html>
