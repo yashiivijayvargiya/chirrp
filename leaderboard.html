@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MUN Leaderboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b1120;
+      color: #ffffff;
+    }
+
+    .page {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 32px 18px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 24px;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .tab {
+      border: 1px solid #334155;
+      background: #111827;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+
+    .table {
+      border: 1px solid #334155;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #111827;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 80px 1fr 110px 110px 110px 110px;
+      gap: 12px;
+      padding: 15px;
+      border-bottom: 1px solid #263244;
+      align-items: center;
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .head {
+      background: #1e293b;
+      color: #cbd5e1;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .rank {
+      font-weight: bold;
+    }
+
+    .gold {
+      color: #facc15;
+    }
+
+    .silver {
+      color: #cbd5e1;
+    }
+
+    .bronze {
+      color: #fb923c;
+    }
+
+    .num {
+      text-align: right;
+      font-weight: bold;
+    }
+
+    .status {
+      padding: 28px;
+      text-align: center;
+      color: #94a3b8;
+    }
+
+    @media (max-width: 760px) {
+      .row {
+        grid-template-columns: 55px 1fr 80px;
+      }
+
+      .hide-mobile {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <h1>MUN Leaderboard</h1>
+    <p class="subtitle">Rankings based on XP earned from MUN sessions</p>
+
+    <div class="tabs">
+      <button class="tab active" id="weeklyBtn">Weekly</button>
+      <button class="tab" id="allTimeBtn">All Time</button>
+    </div>
+
+    <section class="table">
+      <div class="row head">
+        <div>Rank</div>
+        <div>User</div>
+        <div class="num">XP</div>
+        <div class="num hide-mobile">Sessions</div>
+        <div class="num hide-mobile">Speeches</div>
+        <div class="num hide-mobile">Phases</div>
+      </div>
+
+      <div id="leaderboardBody">
+        <div class="status">Loading leaderboard...</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const weeklyBtn = document.getElementById("weeklyBtn");
+    const allTimeBtn = document.getElementById("allTimeBtn");
+    const body = document.getElementById("leaderboardBody");
+
+    weeklyBtn.addEventListener("click", function () {
+      setActiveTab(weeklyBtn);
+      loadLeaderboard("weekly");
+    });
+
+    allTimeBtn.addEventListener("click", function () {
+      setActiveTab(allTimeBtn);
+      loadLeaderboard("all_time");
+    });
+
+    function setActiveTab(activeButton) {
+      weeklyBtn.classList.remove("active");
+      allTimeBtn.classList.remove("active");
+      activeButton.classList.add("active");
+    }
+
+    async function loadLeaderboard(period) {
+      body.innerHTML = '<div class="status">Loading leaderboard...</div>';
+
+      const { data, error } = await client.rpc("get_mun_leaderboard", {
+        period: period
+      });
+
+      if (error) {
+        console.error(error);
+        body.innerHTML = '<div class="status">Could not load leaderboard.</div>';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        body.innerHTML = '<div class="status">No rankings yet.</div>';
+        return;
+      }
+
+      body.innerHTML = data.map(function (player) {
+        const rankClass =
+          player.rank === 1 ? "gold" :
+          player.rank === 2 ? "silver" :
+          player.rank === 3 ? "bronze" :
+          "";
+
+        const shortUserId = player.user_id.slice(0, 8);
+
+        return `
+          <div class="row">
+            <div class="rank ${rankClass}">#${player.rank}</div>
+            <div>Delegate ${shortUserId}</div>
+            <div class="num">${player.total_xp}</div>
+            <div class="num hide-mobile">${player.total_sessions}</div>
+            <div class="num hide-mobile">${player.speeches_made}</div>
+            <div class="num hide-mobile">${player.phases_completed}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    loadLeaderboard("weekly");
+  </script>
+</body>
+</html>
