@@ -353,24 +353,28 @@
         showMsg('password must be at least 6 characters', 'error'); return;
       }
 
-      btn.disabled = true;
-      btn.textContent = 'creating your account...';
-      hideMsg();
+     btn.disabled = true;
+     btn.textContent = 'creating your account...';
+     hideMsg();
 
-      const { data, error } = await sb.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: name } }
-      });
+    const { data, error } = await sb.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { full_name: name },
+      emailRedirectTo: 'https://project-i12g5.vercel.app/dashboard.html'
+    }
+});
 
-      if (error) {
-        showMsg(error.message, 'error');
-        btn.disabled = false;
-        btn.textContent = 'create my account ✦';
-      } else {
-        showMsg('you\'re in! check your email to confirm your account, then come back to log in ✦', 'success');
-        btn.textContent = 'account created!';
-      }
+if (error) {
+  showMsg(error.message, 'error');
+  btn.disabled = false;
+  btn.textContent = 'create my account ✦';
+} else {
+  showMsg('you\'re in! check your email to confirm your account, then come back to log in ✦', 'success');
+  btn.textContent = 'account created!';
+}
+});
     }
 
     // --- LOG IN ---
