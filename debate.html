@@ -581,15 +581,34 @@
     startRound(0);
   }
 
-  // DAILY.CO VOICE
+  // DAILY.CO VOICE — using popup frame with mic permissions
   function joinDailyCall(url) {
     try {
+      const container = document.getElementById("daily-container");
+      container.style.display = "block";
+      container.style.position = "fixed";
+      container.style.bottom = "80px";
+      container.style.right = "20px";
+      container.style.width = "320px";
+      container.style.height = "180px";
+      container.style.borderRadius = "14px";
+      container.style.overflow = "hidden";
+      container.style.zIndex = "999";
+      container.style.boxShadow = "0 8px 32px rgba(0,0,0,0.3)";
+      container.style.border = "2px solid #D63384";
+
       callFrame = window.DailyIframe.createFrame(
-        document.getElementById("daily-container"),
+        container,
         {
-          iframeStyle: { display: "none" },
+          iframeStyle: {
+            width: "100%",
+            height: "100%",
+            border: "none"
+          },
           showLeaveButton: false,
           showFullscreenButton: false,
+          showLocalVideo: false,
+          showParticipantsBar: false,
         }
       );
 
@@ -598,7 +617,7 @@
         document.getElementById("voice-status").className = "voice-status live";
       });
 
-      callFrame.on("participant-joined", (e) => {
+      callFrame.on("participant-joined", () => {
         document.getElementById("voice-status").textContent = "● both connected";
       });
 
@@ -609,12 +628,21 @@
 
       callFrame.on("error", (e) => {
         console.warn("Daily error:", e);
-        document.getElementById("voice-status").textContent = "voice error";
+        // fallback — open in new tab
+        document.getElementById("voice-status").textContent = "● opening voice tab...";
+        window.open(url + "?userName=" + encodeURIComponent(myName), "_blank", "width=400,height=300");
+        document.getElementById("voice-status").textContent = "● voice in new tab";
+        document.getElementById("voice-status").className = "voice-status live";
       });
 
-      callFrame.join({ url, userName: myName });
+      callFrame.join({ url, userName: myName, startVideoOff: true, startAudioOff: false });
     } catch(e) {
-      console.warn("Daily.co failed to load:", e);
+      console.warn("Daily.co failed:", e);
+      // fallback — open Daily room directly
+      const voiceUrl = url + "?userName=" + encodeURIComponent(myName);
+      window.open(voiceUrl, "_blank", "width=400,height=300,left=100,top=100");
+      document.getElementById("voice-status").textContent = "● voice in new tab";
+      document.getElementById("voice-status").className = "voice-status live";
     }
   }
 
