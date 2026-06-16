@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chirrp — your profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Quicksand', sans-serif; background: #FEF0F5; color: #2A1A2E; min-height: 100vh; }
+
+    nav { background: #fff; border-bottom: 2px solid #F0D0E4; padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .logo { font-family: 'Righteous', cursive; font-size: 26px; color: #D63384; text-decoration: none; }
+    .logo span { color: #3AAFE0; }
+    .nav-right { display: flex; gap: 12px; align-items: center; }
+    .nav-back { font-size: 13px; font-weight: 700; color: #aaa; text-decoration: none; }
+    .nav-back:hover { color: #D63384; }
+    .logout-btn { font-size: 12px; font-weight: 700; color: #aaa; background: none; border: none; cursor: pointer; font-family: 'Quicksand', sans-serif; }
+    .logout-btn:hover { color: #D63384; }
+
+    main { max-width: 720px; margin: 0 auto; padding: 32px 24px; }
+
+    /* HERO */
+    .profile-hero { background: #2A1A2E; border-radius: 20px; padding: 32px; margin-bottom: 20px; display: flex; align-items: center; gap: 24px; position: relative; overflow: hidden; }
+    .ph-deco { position: absolute; right: -20px; top: -20px; font-size: 140px; opacity: 0.04; }
+    .ph-avatar { width: 80px; height: 80px; border-radius: 50%; background: rgba(214,51,132,0.2); border: 3px solid #D63384; display: flex; align-items: center; justify-content: center; font-size: 40px; flex-shrink: 0; }
+    .ph-info { flex: 1; }
+    .ph-name { font-family: 'Righteous', cursive; font-size: 26px; color: #fff; margin-bottom: 3px; }
+    .ph-username { font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 10px; }
+    .ph-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+    .ph-tag { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 10px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6); letter-spacing: 0.5px; }
+    .ph-right { text-align: right; }
+    .ph-level { font-family: 'Righteous', cursive; font-size: 13px; color: #F0A0C4; margin-bottom: 4px; }
+    .ph-joined { font-size: 11px; color: rgba(255,255,255,0.3); }
+    .edit-btn { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6); font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); cursor: pointer; margin-top: 8px; display: block; }
+    .edit-btn:hover { background: rgba(255,255,255,0.14); }
+
+    /* STATS ROW */
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 16px 12px; text-align: center; }
+    .stat-num { font-family: 'Righteous', cursive; font-size: 28px; color: #D63384; }
+    .stat-lbl { font-size: 11px; font-weight: 700; color: #aaa; margin-top: 3px; }
+    .stat-card.dark { background: #2A1A2E; border-color: #2A1A2E; }
+    .stat-card.dark .stat-num { color: #F0A0C4; }
+    .stat-card.dark .stat-lbl { color: rgba(255,255,255,0.3); }
+
+    /* XP BAR */
+    .xp-section { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 18px 20px; margin-bottom: 20px; }
+    .xp-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .xp-label { font-size: 12px; font-weight: 700; color: #D63384; letter-spacing: 1px; }
+    .xp-nums { font-family: 'Righteous', cursive; font-size: 16px; color: #2A1A2E; }
+    .xp-bar { height: 10px; background: #F5E8F0; border-radius: 5px; overflow: hidden; margin-bottom: 6px; }
+    .xp-fill { height: 100%; background: #D63384; border-radius: 5px; transition: width 1s ease; }
+    .xp-sub { font-size: 12px; color: #aaa; font-weight: 600; }
+
+    /* STREAK */
+    .streak-section { background: #D63384; border-radius: 14px; padding: 18px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; }
+    .ss-num { font-family: 'Righteous', cursive; font-size: 52px; color: #fff; line-height: 1; }
+    .ss-info { flex: 1; }
+    .ss-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); letter-spacing: 1px; margin-bottom: 4px; }
+    .ss-sub { font-size: 13px; color: rgba(255,255,255,0.8); }
+    .ss-dots { display: flex; gap: 6px; margin-top: 10px; }
+    .ss-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.4); }
+    .ss-dot.done { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); color: #fff; }
+    .ss-dot.today { background: #fff; border-color: #fff; color: #D63384; }
+    .ss-day { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .ss-day-lbl { font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.4); }
+
+    /* SKILLS */
+    .skills-card { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+    .card-title { font-family: 'Righteous', cursive; font-size: 18px; color: #2A1A2E; margin-bottom: 14px; }
+    .sk-r { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .sk-r:last-child { margin-bottom: 0; }
+    .sk-n { font-size: 13px; font-weight: 700; color: #2A1A2E; min-width: 110px; }
+    .sk-bar { flex: 1; height: 8px; background: #F5E8F0; border-radius: 4px; overflow: hidden; }
+    .sk-f { height: 100%; border-radius: 4px; transition: width 1.2s ease; }
+    .sk-p { font-size: 11px; font-weight: 700; min-width: 32px; text-align: right; }
+
+    /* BADGES */
+    .badges-card { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+    .badges-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-top: 14px; }
+    .badge { text-align: center; padding: 14px 8px; border-radius: 12px; border: 2px solid #F0D0E4; }
+    .badge.earned { background: #FEF0F5; border-color: #D63384; }
+    .badge.locked { opacity: 0.4; }
+    .badge-icon { font-size: 28px; margin-bottom: 6px; }
+    .badge-name { font-size: 11px; font-weight: 700; color: #2A1A2E; margin-bottom: 2px; }
+    .badge-desc { font-size: 10px; color: #aaa; line-height: 1.4; }
+    .badge.earned .badge-name { color: #D63384; }
+
+    /* HISTORY TABS */
+    .history-tabs { display: flex; gap: 0; background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 4px; margin-bottom: 14px; }
+    .h-tab { flex: 1; text-align: center; padding: 9px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; color: #aaa; transition: all 0.2s; border: none; background: transparent; font-family: 'Quicksand', sans-serif; }
+    .h-tab.active { background: #D63384; color: #fff; }
+
+    .history-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+    .h-row { background: #fff; border: 2px solid #F0D0E4; border-radius: 13px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+    .h-icon { width: 40px; height: 40px; border-radius: 11px; background: #FEF0F5; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .h-info { flex: 1; }
+    .h-title { font-size: 13px; font-weight: 700; color: #2A1A2E; margin-bottom: 2px; line-height: 1.4; }
+    .h-meta { font-size: 11px; color: #aaa; font-weight: 600; }
+    .h-right { text-align: right; }
+    .h-xp { font-family: 'Righteous', cursive; font-size: 16px; color: #D63384; }
+    .h-score { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .h-date { font-size: 10px; color: #ccc; margin-top: 2px; }
+    .empty-history { text-align: center; padding: 32px; color: #aaa; font-size: 14px; font-weight: 600; }
+
+    /* EDIT MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #fff; border-radius: 20px; padding: 32px; max-width: 440px; width: 90%; }
+    .modal-title { font-family: 'Righteous', cursive; font-size: 22px; color: #2A1A2E; margin-bottom: 20px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .form-group label { font-size: 12px; font-weight: 700; color: #2A1A2E; letter-spacing: 0.5px; }
+    .form-group input { padding: 12px 14px; border: 2px solid #F0D0E4; border-radius: 12px; font-size: 14px; font-family: 'Quicksand', sans-serif; font-weight: 500; color: #2A1A2E; outline: none; }
+    .form-group input:focus { border-color: #D63384; }
+    .avatar-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .av-opt { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #F0D0E4; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; transition: all 0.15s; }
+    .av-opt:hover { border-color: #D63384; transform: scale(1.08); }
+    .av-opt.selected { border-color: #D63384; box-shadow: 0 0 0 3px rgba(214,51,132,0.15); }
+    .modal-btns { display: flex; gap: 10px; }
+    .save-btn { flex: 1; background: #D63384; color: #fff; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; padding: 12px; border-radius: 12px; border: none; cursor: pointer; }
+    .cancel-btn { flex: 1; background: transparent; color: #aaa; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; padding: 12px; border-radius: 12px; border: 2px solid #F0D0E4; cursor: pointer; }
+
+    .loading { text-align: center; padding: 60px; font-size: 22px; color: #D63384; }
+
+    @media (max-width: 500px) {
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .badges-grid { grid-template-columns: repeat(3,1fr); }
+      .profile-hero { flex-direction: column; text-align: center; }
+      .ph-right { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">chir<span>rp</span></a>
+  <div class="nav-right">
+    <a href="dashboard.html" class="nav-back">← dashboard</a>
+    <button class="logout-btn" onclick="logout()">log out</button>
+  </div>
+</nav>
+
+<div id="loading" class="loading">loading your profile ✦</div>
+
+<main id="main" style="display:none;">
+
+  <!-- HERO -->
+  <div class="profile-hero">
+    <div class="ph-deco" id="ph-deco">🦋</div>
+    <div class="ph-avatar" id="ph-avatar">🦋</div>
+    <div class="ph-info">
+      <div class="ph-name" id="ph-name">—</div>
+      <div class="ph-username" id="ph-username">@—</div>
+      <div class="ph-tags" id="ph-tags"></div>
+    </div>
+    <div class="ph-right">
+      <div class="ph-level" id="ph-level">beginner</div>
+      <div class="ph-joined" id="ph-joined">joined —</div>
+      <button class="edit-btn" onclick="openEdit()">edit profile</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card dark">
+      <div class="stat-num" id="stat-xp">0</div>
+      <div class="stat-lbl">total xp</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-sessions">0</div>
+      <div class="stat-lbl">sessions done</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-streak">0</div>
+      <div class="stat-lbl">day streak 🔥</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-badges">0</div>
+      <div class="stat-lbl">badges earned</div>
+    </div>
+  </div>
+
+  <!-- XP BAR -->
+  <div class="xp-section">
+    <div class="xp-top">
+      <div class="xp-label">XP PROGRESS</div>
+      <div class="xp-nums" id="xp-nums">0 / 1000 xp</div>
+    </div>
+    <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+    <div class="xp-sub" id="xp-sub">complete today's challenge to earn xp!</div>
+  </div>
+
+  <!-- STREAK -->
+  <div class="streak-section">
+    <div class="ss-num" id="ss-num">0</div>
+    <div class="ss-info">
+      <div class="ss-label">DAY STREAK 🔥</div>
+      <div class="ss-sub" id="ss-sub">start practicing to build your streak</div>
+      <div class="ss-dots">
+        <div class="ss-day"><div class="ss-dot" id="sd-0"></div><span class="ss-day-lbl">M</span></div>
+        <div class="ss-day"><div class="ss-dot" id="sd-1"></div><span class="ss-day-lbl">T</span></div>
+        <div class="ss-day"><div class="ss-dot" id="sd-2"></div><span class="ss-day-lbl">W</span></div>
+        <div class="ss-day"><div class="ss-dot" id="sd-3"></div><span class="ss-day-lbl">T</span></div>
+        <div class="ss-day"><div class="ss-dot" id="sd-4"></div><span class="ss-day-lbl">F</span></div>
+        <div class="ss-day"><div class="ss-dot" id="sd-5"></div><span class="ss-day-lbl">S</span></div>
+        <div class="ss-day"><div class="ss-dot" id="sd-6"></div><span class="ss-day-lbl">S</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SKILLS -->
+  <div class="skills-card">
+    <div class="card-title">communication skills ✦</div>
+    <div class="sk-r"><span class="sk-n">argumentation</span><div class="sk-bar"><div class="sk-f" id="sk-arg" style="width:0%;background:#D63384;"></div></div><span class="sk-p" id="skp-arg" style="color:#D63384;">0%</span></div>
+    <div class="sk-r"><span class="sk-n">interview ready</span><div class="sk-bar"><div class="sk-f" id="sk-int" style="width:0%;background:#3AAFE0;"></div></div><span class="sk-p" id="skp-int" style="color:#3AAFE0;">0%</span></div>
+    <div class="sk-r"><span class="sk-n">public speaking</span><div class="sk-bar"><div class="sk-f" id="sk-spk" style="width:0%;background:#D63384;"></div></div><span class="sk-p" id="skp-spk" style="color:#D63384;">0%</span></div>
+    <div class="sk-r"><span class="sk-n">MUN / debate</span><div class="sk-bar"><div class="sk-f" id="sk-mun" style="width:0%;background:#3AAFE0;"></div></div><span class="sk-p" id="skp-mun" style="color:#3AAFE0;">0%</span></div>
+    <div class="sk-r"><span class="sk-n">consistency</span><div class="sk-bar"><div class="sk-f" id="sk-con" style="width:0%;background:#D63384;"></div></div><span class="sk-p" id="skp-con" style="color:#D63384;">0%</span></div>
+  </div>
+
+  <!-- BADGES -->
+  <div class="badges-card">
+    <div class="card-title">badges ✦</div>
+    <div class="badges-grid" id="badges-grid"></div>
+  </div>
+
+  <!-- SESSION HISTORY -->
+  <div class="history-tabs">
+    <button class="h-tab active" onclick="switchHistory('all', this)">all</button>
+    <button class="h-tab" onclick="switchHistory('speaking', this)">speaking</button>
+    <button class="h-tab" onclick="switchHistory('interview', this)">interview</button>
+    <button class="h-tab" onclick="switchHistory('mun', this)">MUN</button>
+  </div>
+  <div class="history-list" id="history-list"></div>
+
+</main>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-title">edit profile ✦</div>
+    <div class="form-group">
+      <label>YOUR NAME</label>
+      <input type="text" id="edit-name" placeholder="your name" />
+    </div>
+    <div class="form-group">
+      <label>USERNAME</label>
+      <input type="text" id="edit-username" placeholder="@handle" />
+    </div>
+    <div class="form-group">
+      <label>PICK AN AVATAR</label>
+      <div class="avatar-grid" id="edit-avatar-grid">
+        <div class="av-opt" onclick="selectAvatar(this)" data-val="🦋">🦋</div>
+        <div class="av-opt" onclick="selectAvatar(this)" data-val="🌸">🌸</div>
+        <div class="av-opt" onclick="selectAvatar(this)" data-val="⚡">⚡</div>
+        <div class="av-opt" onclick="selectAvatar(this)" data-val="🌊">🌊</div>
+        <div class="av-opt" onclick="selectAvatar(this)" data-val="🔥">🔥</div>
+        <div class="av-opt" onclick="selectAvatar(this)" data-val="🌙">🌙</div>
+        <div class="av-opt" onclick="selectAvatar(this)" data-val="🎯">🎯</div>
+        <div class="av-opt" onclick="selectAvatar(this)" data-val="👑">👑</div>
+        <div class="av-opt" onclick="selectAvatar(this)" data-val="🦅">🦅</div>
+        <div class="av-opt" onclick="selectAvatar(this)" data-val="💎">💎</div>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="cancel-btn" onclick="closeEdit()">cancel</button>
+      <button class="save-btn" onclick="saveEdit()">save changes ✦</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const { createClient } = supabase;
+  const sb = createClient(
+    'https://mkjhrlsxmakbnxqrrvlu.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ramhybHN4bWFrYm54cXJydmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNjcyNTMsImV4cCI6MjA5Njk0MzI1M30.fH_ZoJPYnNGwHX6gPELYIIApe9EzZt6SYlb8wPMeMtI'
+  );
+
+  let userId = null;
+  let profile = null;
+  let allSessions = [];
+  let selectedAvatarEdit = '';
+
+  const allBadges = [
+    { id: 'first_speech', icon: '🎙', name: 'first word', desc: 'completed your first speaking challenge', condition: (p, s) => s.speaking.length >= 1 },
+    { id: 'streak_3', icon: '🔥', name: 'on fire', desc: '3 day streak', condition: (p) => (p.streak||0) >= 3 },
+    { id: 'streak_7', icon: '⚡', name: 'unstoppable', desc: '7 day streak', condition: (p) => (p.streak||0) >= 7 },
+    { id: 'streak_30', icon: '👑', name: 'streak queen', desc: '30 day streak', condition: (p) => (p.streak||0) >= 30 },
+    { id: 'interview_5', icon: '💼', name: 'interview ready', desc: '5 interview sessions done', condition: (p, s) => s.interview.length >= 5 },
+    { id: 'mun_debut', icon: '🌍', name: 'mun debut', desc: 'first MUN session', condition: (p, s) => s.mun.length >= 1 },
+    { id: 'xp_500', icon: '⭐', name: 'rising star', desc: 'earned 500 xp', condition: (p) => (p.xp||0) >= 500 },
+    { id: 'xp_1000', icon: '💎', name: 'diamond voice', desc: 'earned 1000 xp', condition: (p) => (p.xp||0) >= 1000 },
+    { id: 'sessions_10', icon: '🏆', name: 'dedicated', desc: '10 sessions total', condition: (p, s) => (s.speaking.length + s.interview.length + s.mun.length) >= 10 },
+    { id: 'speaking_10', icon: '🎤', name: 'speaker', desc: '10 speaking challenges', condition: (p, s) => s.speaking.length >= 10 },
+    { id: 'all_modes', icon: '🌟', name: 'all rounder', desc: 'tried all practice modes', condition: (p, s) => s.speaking.length > 0 && s.interview.length > 0 && s.mun.length > 0 },
+    { id: 'high_score', icon: '🎯', name: 'sharp mind', desc: 'scored 4+ avg in interview', condition: (p, s) => s.interview.some(i => i.overall_score >= 4) },
+  ];
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'signup.html'; return; }
+    userId = session.user.id;
+
+    const { data: p } = await sb.from('profiles').select('*').eq('id', userId).single();
+    profile = p;
+
+    const [{ data: speakingSess }, { data: interviewSess }, { data: munSess }] = await Promise.all([
+      sb.from('practice_sessions').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      sb.from('interview_sessions').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      sb.from('mun_sessions').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+    ]);
+
+    allSessions = {
+      speaking: speakingSess || [],
+      interview: interviewSess || [],
+      mun: munSess || []
+    };
+
+    renderProfile();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+  }
+
+  function renderProfile() {
+    const p = profile;
+    const avatar = p.avatar || '🦋';
+
+    document.getElementById('ph-avatar').textContent = avatar;
+    document.getElementById('ph-deco').textContent = avatar;
+    document.getElementById('ph-name').textContent = p.name || 'Chirrper';
+    document.getElementById('ph-username').textContent = '@' + (p.username || 'chirrper');
+    document.getElementById('ph-level').textContent = p.level || 'beginner';
+    document.getElementById('ph-joined').textContent = 'joined ' + new Date(p.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+
+    // goals tags
+    const tagsEl = document.getElementById('ph-tags');
+    tagsEl.innerHTML = '';
+    (p.goals || []).forEach(g => {
+      const el = document.createElement('span');
+      el.className = 'ph-tag'; el.textContent = g;
+      tagsEl.appendChild(el);
+    });
+
+    // stats
+    const totalSessions = allSessions.speaking.length + allSessions.interview.length + allSessions.mun.length;
+    document.getElementById('stat-xp').textContent = (p.xp || 0).toLocaleString();
+    document.getElementById('stat-sessions').textContent = totalSessions;
+    document.getElementById('stat-streak').textContent = p.streak || 0;
+    document.getElementById('ss-num').textContent = p.streak || 0;
+    document.getElementById('ss-sub').textContent = (p.streak || 0) > 0 ? 'keep it going — practice today!' : 'start practicing to build your streak';
+
+    // xp bar
+    const xp = p.xp || 0;
+    const level = Math.floor(xp / 1000) + 1;
+    const xpInLevel = xp % 1000;
+    const pct = (xpInLevel / 1000) * 100;
+    document.getElementById('xp-fill').style.width = pct + '%';
+    document.getElementById('xp-nums').textContent = xpInLevel + ' / 1000 xp (level ' + level + ')';
+    document.getElementById('xp-sub').textContent = (1000 - xpInLevel) + ' xp to level ' + (level + 1);
+
+    // streak dots
+    const today = new Date().getDay(); // 0=Sun
+    const days = ['sd-1','sd-2','sd-3','sd-4','sd-5','sd-6','sd-0']; // Mon-Sun
+    const streak = p.streak || 0;
+    days.forEach((id, i) => {
+      const dot = document.getElementById(id);
+      if (!dot) return;
+      const dayOffset = (i - (today === 0 ? 6 : today - 1) + 7) % 7;
+      if (dayOffset === 0) { dot.classList.add('today'); dot.textContent = '★'; }
+      else if (dayOffset > 0 && dayOffset <= streak) { dot.classList.add('done'); dot.textContent = '✓'; }
+    });
+
+    // skills — calculated from session data
+    const spkAvg = allSessions.speaking.length ? avg(allSessions.speaking.map(s => ((s.clarity||0)+(s.confidence||0)+(s.structure||0))/3)) : 0;
+    const intAvg = allSessions.interview.length ? avg(allSessions.interview.map(s => s.overall_score||0)) : 0;
+    const munAvg = allSessions.mun.length ? Math.min(allSessions.mun.length * 15, 80) : 0;
+    const consistency = Math.min((streak / 30) * 100, 100);
+    const debateAvg = Math.min((allSessions.speaking.length + allSessions.mun.length) * 5, 85);
+
+    setSkill('sk-arg', 'skp-arg', Math.round((spkAvg/5)*100));
+    setSkill('sk-int', 'skp-int', Math.round((intAvg/5)*100));
+    setSkill('sk-spk', 'skp-spk', Math.round((spkAvg/5)*80 + (allSessions.speaking.length * 2)));
+    setSkill('sk-mun', 'skp-mun', Math.round(munAvg));
+    setSkill('sk-con', 'skp-con', Math.round(consistency));
+
+    // badges
+    renderBadges();
+
+    // history
+    renderHistory('all');
+  }
+
+  function avg(arr) { return arr.length ? arr.reduce((a,b) => a+b, 0) / arr.length : 0; }
+
+  function setSkill(barId, valId, pct) {
+    pct = Math.min(Math.max(pct, 0), 100);
+    document.getElementById(barId).style.width = pct + '%';
+    document.getElementById(valId).textContent = pct + '%';
+  }
+
+  function renderBadges() {
+    const grid = document.getElementById('badges-grid');
+    grid.innerHTML = '';
+    let earnedCount = 0;
+    allBadges.forEach(b => {
+      const earned = b.condition(profile, allSessions);
+      if (earned) earnedCount++;
+      const el = document.createElement('div');
+      el.className = 'badge ' + (earned ? 'earned' : 'locked');
+      el.innerHTML = `<div class="badge-icon">${b.icon}</div><div class="badge-name">${b.name}</div><div class="badge-desc">${b.desc}</div>`;
+      grid.appendChild(el);
+    });
+    document.getElementById('stat-badges').textContent = earnedCount;
+  }
+
+  let currentHistoryTab = 'all';
+  function switchHistory(tab, el) {
+    currentHistoryTab = tab;
+    document.querySelectorAll('.h-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderHistory(tab);
+  }
+
+  function renderHistory(tab) {
+    const list = document.getElementById('history-list');
+    list.innerHTML = '';
+
+    let rows = [];
+    if (tab === 'all' || tab === 'speaking') {
+      allSessions.speaking.forEach(s => rows.push({
+        type: 'speaking', icon: '🎙', bg: '#FEF0F5',
+        title: s.topic || 'speaking challenge',
+        meta: (s.duration_mins || 2) + ' min · avg score ' + ((s.avg_score||0).toFixed(1)) + '/5',
+        xp: s.xp_earned || 0,
+        score: (s.avg_score||0).toFixed(1) + '/5',
+        date: s.created_at
+      }));
+    }
+    if (tab === 'all' || tab === 'interview') {
+      allSessions.interview.forEach(s => rows.push({
+        type: 'interview', icon: '💼', bg: '#EBF7FD',
+        title: (s.category || 'hr') + ' interview · ' + (s.mode || 'quick') + ' round',
+        meta: (s.questions_answered || 0) + ' questions answered',
+        xp: s.xp_earned || 0,
+        score: (s.overall_score||0).toFixed(1) + '/5',
+        date: s.created_at
+      }));
+    }
+    if (tab === 'all' || tab === 'mun') {
+      allSessions.mun.forEach(s => rows.push({
+        type: 'mun', icon: '🌍', bg: '#F0FBF0',
+        title: (s.committee || 'UNSC') + ' · ' + (s.country || 'delegate'),
+        meta: (s.speeches_made || 0) + ' speeches · ' + (s.phases_completed || 0) + ' phases',
+        xp: s.xp_earned || 0,
+        score: null,
+        date: s.created_at
+      }));
+    }
+
+    rows.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    if (rows.length === 0) {
+      list.innerHTML = '<div class="empty-history">no sessions yet — start practicing! ✦</div>';
+      return;
+    }
+
+    rows.forEach(r => {
+      const el = document.createElement('div');
+      el.className = 'h-row';
+      el.innerHTML = `
+        <div class="h-icon" style="background:${r.bg}">${r.icon}</div>
+        <div class="h-info">
+          <div class="h-title">${r.title}</div>
+          <div class="h-meta">${r.meta}</div>
+        </div>
+        <div class="h-right">
+          <div class="h-xp">+${r.xp} xp</div>
+          ${r.score ? '<div class="h-score">' + r.score + '</div>' : ''}
+          <div class="h-date">${new Date(r.date).toLocaleDateString('en-IN', { day:'numeric', month:'short' })}</div>
+        </div>`;
+      list.appendChild(el);
+    });
+  }
+
+  // EDIT PROFILE
+  let editAvatar = '';
+  function openEdit() {
+    document.getElementById('edit-name').value = profile.name || '';
+    document.getElementById('edit-username').value = profile.username || '';
+    editAvatar = profile.avatar || '🦋';
+    document.querySelectorAll('.av-opt').forEach(el => {
+      el.classList.toggle('selected', el.dataset.val === editAvatar);
+    });
+    document.getElementById('edit-modal').classList.add('show');
+  }
+  function closeEdit() {
+    document.getElementById('edit-modal').classList.remove('show');
+  }
+  function selectAvatar(el) {
+    document.querySelectorAll('.av-opt').forEach(a => a.classList.remove('selected'));
+    el.classList.add('selected');
+    editAvatar = el.dataset.val;
+  }
+  async function saveEdit() {
+    const name = document.getElementById('edit-name').value.trim();
+    const username = document.getElementById('edit-username').value.trim();
+    if (!name) return;
+    await sb.from('profiles').update({ name, username, avatar: editAvatar }).eq('id', userId);
+    profile.name = name; profile.username = username; profile.avatar = editAvatar;
+    renderProfile();
+    closeEdit();
+  }
+
+  async function logout() {
+    await sb.auth.signOut();
+    window.location.href = 'index.html';
+  }
+
+  init();
+</script>
+
+</body>
+</html>
