@@ -3,215 +3,420 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MUN Leaderboard</title>
-
+  <title>Chirrp — leaderboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0b1120;
-      color: #ffffff;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Quicksand', sans-serif; background: #FEF0F5; color: #2A1A2E; min-height: 100vh; }
 
-    .page {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 32px 18px;
-    }
+    nav { background: #fff; border-bottom: 2px solid #F0D0E4; padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .logo { font-family: 'Righteous', cursive; font-size: 26px; color: #D63384; text-decoration: none; }
+    .logo span { color: #3AAFE0; }
+    .nav-back { font-size: 13px; font-weight: 700; color: #aaa; text-decoration: none; }
+    .nav-back:hover { color: #D63384; }
 
-    h1 {
-      margin: 0 0 8px;
-      text-align: center;
-    }
+    main { max-width: 720px; margin: 0 auto; padding: 32px 24px; }
 
-    .subtitle {
-      text-align: center;
-      color: #94a3b8;
-      margin-bottom: 24px;
-    }
+    .eyebrow { font-size: 11px; font-weight: 700; color: #D63384; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+    .page-title { font-family: 'Righteous', cursive; font-size: 32px; color: #2A1A2E; text-align: center; margin-bottom: 6px; }
+    .page-sub { font-size: 14px; color: #aaa; text-align: center; margin-bottom: 28px; }
 
-    .tabs {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 22px;
-    }
+    /* TABS */
+    .tabs { display: flex; gap: 0; background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 4px; margin-bottom: 24px; }
+    .tab { flex: 1; text-align: center; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; color: #aaa; transition: all 0.2s; border: none; background: transparent; font-family: 'Quicksand', sans-serif; }
+    .tab.active { background: #D63384; color: #fff; }
 
-    .tab {
-      border: 1px solid #334155;
-      background: #111827;
-      color: white;
-      padding: 10px 18px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
+    /* TOP 3 PODIUM */
+    .podium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 28px; align-items: end; }
+    .podium-card { background: #fff; border: 2px solid #F0D0E4; border-radius: 16px; padding: 18px 12px; text-align: center; }
+    .podium-card.first { background: #2A1A2E; border-color: #2A1A2E; order: 2; padding-top: 28px; }
+    .podium-card.second { order: 1; }
+    .podium-card.third { order: 3; }
+    .podium-medal { font-size: 28px; margin-bottom: 8px; }
+    .podium-avatar { width: 52px; height: 52px; border-radius: 50%; background: #FEF0F5; display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 8px; border: 3px solid #F0D0E4; }
+    .podium-card.first .podium-avatar { background: rgba(214,51,132,0.15); border-color: #D63384; }
+    .podium-name { font-size: 13px; font-weight: 700; color: #2A1A2E; margin-bottom: 2px; }
+    .podium-card.first .podium-name { color: #fff; }
+    .podium-xp { font-family: 'Righteous', cursive; font-size: 18px; color: #D63384; }
+    .podium-card.first .podium-xp { color: #F0A0C4; }
+    .podium-lbl { font-size: 10px; font-weight: 700; color: #aaa; }
+    .podium-card.first .podium-lbl { color: rgba(255,255,255,0.4); }
 
-    .tab.active {
-      background: #2563eb;
-      border-color: #2563eb;
-    }
+    /* YOUR RANK CARD */
+    .your-rank { background: #D63384; border-radius: 14px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px; }
+    .yr-rank { font-family: 'Righteous', cursive; font-size: 36px; color: #fff; min-width: 50px; }
+    .yr-avatar { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .yr-info { flex: 1; }
+    .yr-name { font-size: 14px; font-weight: 700; color: #fff; }
+    .yr-sub { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+    .yr-xp { text-align: right; }
+    .yr-xp-num { font-family: 'Righteous', cursive; font-size: 22px; color: #fff; }
+    .yr-xp-lbl { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.6); }
 
-    .table {
-      border: 1px solid #334155;
-      border-radius: 10px;
-      overflow: hidden;
-      background: #111827;
-    }
+    /* FULL LIST */
+    .list-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .list-title { font-size: 12px; font-weight: 700; color: #D63384; letter-spacing: 1.5px; text-transform: uppercase; }
+    .list-count { font-size: 12px; font-weight: 700; color: #aaa; }
 
-    .row {
-      display: grid;
-      grid-template-columns: 80px 1fr 110px 110px 110px 110px;
-      gap: 12px;
-      padding: 15px;
-      border-bottom: 1px solid #263244;
-      align-items: center;
-    }
+    .lb-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+    .lb-row { background: #fff; border: 2px solid #F0D0E4; border-radius: 13px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; transition: border-color 0.18s; }
+    .lb-row:hover { border-color: #D63384; }
+    .lb-row.you { background: #FEF0F5; border-color: #D63384; }
+    .lb-row.top3 { border-color: #F0D0E4; }
+    .lb-rank { font-family: 'Righteous', cursive; font-size: 18px; color: #D63384; min-width: 32px; }
+    .lb-row.you .lb-rank { color: #D63384; }
+    .lb-avatar { width: 38px; height: 38px; border-radius: 50%; background: #FEF0F5; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 2px solid #F0D0E4; flex-shrink: 0; }
+    .lb-row.you .lb-avatar { border-color: #D63384; }
+    .lb-info { flex: 1; }
+    .lb-name { font-size: 14px; font-weight: 700; color: #2A1A2E; }
+    .lb-row.you .lb-name { color: #D63384; }
+    .lb-meta { font-size: 11px; color: #aaa; margin-top: 2px; font-weight: 600; }
+    .lb-right { text-align: right; }
+    .lb-xp { font-family: 'Righteous', cursive; font-size: 18px; color: #2A1A2E; }
+    .lb-row.you .lb-xp { color: #D63384; }
+    .lb-xp-lbl { font-size: 10px; font-weight: 700; color: #aaa; }
+    .lb-streak { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: #D63384; background: #FEF0F5; padding: 2px 8px; border-radius: 8px; }
 
-    .row:last-child {
-      border-bottom: none;
-    }
+    /* STATS ROW */
+    .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 16px; text-align: center; }
+    .stat-num { font-family: 'Righteous', cursive; font-size: 28px; color: #D63384; }
+    .stat-lbl { font-size: 11px; font-weight: 700; color: #aaa; margin-top: 3px; }
 
-    .head {
-      background: #1e293b;
-      color: #cbd5e1;
-      font-weight: bold;
-      font-size: 14px;
-    }
+    /* EMPTY / LOADING */
+    .empty { text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px; font-weight: 600; }
+    .loading { text-align: center; padding: 40px; font-size: 22px; color: #D63384; }
 
-    .rank {
-      font-weight: bold;
-    }
+    /* STREAK KINGS */
+    .streak-section { margin-bottom: 24px; }
+    .streak-list { display: flex; flex-direction: column; gap: 8px; }
+    .streak-row { background: #fff; border: 2px solid #F0D0E4; border-radius: 13px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+    .streak-row.you { background: #FEF0F5; border-color: #D63384; }
+    .streak-fire { font-size: 22px; }
+    .streak-info { flex: 1; }
+    .streak-name { font-size: 14px; font-weight: 700; color: #2A1A2E; }
+    .streak-row.you .streak-name { color: #D63384; }
+    .streak-days { font-size: 11px; color: #aaa; font-weight: 600; margin-top: 1px; }
+    .streak-num { font-family: 'Righteous', cursive; font-size: 24px; color: #D63384; }
+    .streak-lbl { font-size: 10px; font-weight: 700; color: #aaa; }
 
-    .gold {
-      color: #facc15;
-    }
+    .taskbar { background: #F0D0E4; border-top: 2px solid #D4A0C0; padding: 7px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; bottom: 0; }
+    .tb-time { font-size: 12px; font-weight: 800; color: #2A1A2E; }
+    .tb-tabs { display: flex; gap: 6px; }
+    .tb-tab { background: #fff; border: 1px solid #D4A0C0; border-radius: 4px; padding: 5px 12px; font-size: 11px; font-weight: 700; color: #888; cursor: pointer; }
+    .tb-tab:hover { border-color: #D63384; color: #D63384; }
 
-    .silver {
-      color: #cbd5e1;
-    }
-
-    .bronze {
-      color: #fb923c;
-    }
-
-    .num {
-      text-align: right;
-      font-weight: bold;
-    }
-
-    .status {
-      padding: 28px;
-      text-align: center;
-      color: #94a3b8;
-    }
-
-    @media (max-width: 760px) {
-      .row {
-        grid-template-columns: 55px 1fr 80px;
-      }
-
-      .hide-mobile {
-        display: none;
-      }
+    @media (max-width: 480px) {
+      .podium { gap: 8px; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
-
 <body>
-  <main class="page">
-    <h1>MUN Leaderboard</h1>
-    <p class="subtitle">Rankings based on XP earned from MUN sessions</p>
 
-    <div class="tabs">
-      <button class="tab active" id="weeklyBtn">Weekly</button>
-      <button class="tab" id="allTimeBtn">All Time</button>
+<nav>
+  <a href="index.html" class="logo">chir<span>rp</span></a>
+  <a href="dashboard.html" class="nav-back">← dashboard</a>
+</nav>
+
+<main>
+  <div class="eyebrow">leaderboard</div>
+  <h1 class="page-title">top chirrpers ✦</h1>
+  <p class="page-sub">who's putting in the most work this week? keep practicing to climb the ranks.</p>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('weekly', this)">this week</button>
+    <button class="tab" onclick="switchTab('alltime', this)">all time</button>
+    <button class="tab" onclick="switchTab('streaks', this)">streak kings</button>
+  </div>
+
+  <div id="loading" class="loading">loading rankings ✦</div>
+  <div id="content" style="display:none;">
+
+    <!-- YOUR RANK -->
+    <div class="your-rank" id="your-rank" style="display:none;">
+      <div class="yr-rank" id="yr-rank">#—</div>
+      <div class="yr-avatar" id="yr-avatar">🦋</div>
+      <div class="yr-info">
+        <div class="yr-name" id="yr-name">you</div>
+        <div class="yr-sub" id="yr-sub">keep going!</div>
+      </div>
+      <div class="yr-xp">
+        <div class="yr-xp-num" id="yr-xp">0</div>
+        <div class="yr-xp-lbl" id="yr-xp-lbl">xp this week</div>
+      </div>
     </div>
 
-    <section class="table">
-      <div class="row head">
-        <div>Rank</div>
-        <div>User</div>
-        <div class="num">XP</div>
-        <div class="num hide-mobile">Sessions</div>
-        <div class="num hide-mobile">Speeches</div>
-        <div class="num hide-mobile">Phases</div>
+    <!-- PODIUM (top 3) -->
+    <div class="podium" id="podium"></div>
+
+    <!-- STATS -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-lbl">total chirrpers</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-active">—</div><div class="stat-lbl">active this week</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-sessions">—</div><div class="stat-lbl">sessions this week</div></div>
+    </div>
+
+    <!-- FULL LIST -->
+    <div id="tab-weekly">
+      <div class="list-header">
+        <div class="list-title">weekly rankings</div>
+        <div class="list-count" id="weekly-count"></div>
       </div>
+      <div class="lb-list" id="weekly-list"></div>
+    </div>
 
-      <div id="leaderboardBody">
-        <div class="status">Loading leaderboard...</div>
+    <div id="tab-alltime" style="display:none;">
+      <div class="list-header">
+        <div class="list-title">all time rankings</div>
+        <div class="list-count" id="alltime-count"></div>
       </div>
-    </section>
-  </main>
+      <div class="lb-list" id="alltime-list"></div>
+    </div>
 
-  <script>
-    const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
-    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    <div id="tab-streaks" style="display:none;">
+      <div class="list-header">
+        <div class="list-title">longest streaks 🔥</div>
+        <div class="list-count" id="streaks-count"></div>
+      </div>
+      <div class="streak-list" id="streaks-list"></div>
+    </div>
 
-    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </div>
+</main>
 
-    const weeklyBtn = document.getElementById("weeklyBtn");
-    const allTimeBtn = document.getElementById("allTimeBtn");
-    const body = document.getElementById("leaderboardBody");
+<div class="taskbar">
+  <div class="tb-tabs">
+    <div class="tb-tab" onclick="window.location.href='dashboard.html'">dashboard</div>
+    <div class="tb-tab" onclick="window.location.href='practice.html'">practice</div>
+  </div>
+  <div class="tb-time" id="clock">--:-- --</div>
+</div>
 
-    weeklyBtn.addEventListener("click", function () {
-      setActiveTab(weeklyBtn);
-      loadLeaderboard("weekly");
+<script>
+  const { createClient } = supabase;
+  const sb = createClient(
+    'https://mkjhrlsxmakbnxqrrvlu.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ramhybHN4bWFrYm54cXJydmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNjcyNTMsImV4cCI6MjA5Njk0MzI1M30.fH_ZoJPYnNGwHX6gPELYIIApe9EzZt6SYlb8wPMeMtI'
+  );
+
+  // clock
+  function updateClock() {
+    const now = new Date();
+    let h = now.getHours(), m = now.getMinutes().toString().padStart(2,'0');
+    const ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+    document.getElementById('clock').textContent = h + ':' + m + ' ' + ampm;
+  }
+  updateClock(); setInterval(updateClock, 1000);
+
+  let currentTab = 'weekly';
+  let userId = null;
+  let allProfiles = [];
+  let weeklySessions = [];
+
+  function switchTab(tab, el) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    ['weekly','alltime','streaks'].forEach(t => {
+      document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+    });
+    // update your rank card label
+    const lbl = document.getElementById('yr-xp-lbl');
+    const yrXp = document.getElementById('yr-xp');
+    if (!lbl || !yrXp) return;
+    if (tab === 'weekly') { lbl.textContent = 'xp this week'; }
+    else if (tab === 'alltime') { lbl.textContent = 'xp all time'; }
+    else { lbl.textContent = 'day streak'; }
+    updateYourRankForTab(tab);
+  }
+
+  function updateYourRankForTab(tab) {
+    const me = allProfiles.find(p => p.id === userId);
+    if (!me) return;
+    const yrXp = document.getElementById('yr-xp');
+    const yrRank = document.getElementById('yr-rank');
+    const yrSub = document.getElementById('yr-sub');
+
+    if (tab === 'weekly') {
+      const sorted = getWeeklySorted();
+      const rank = sorted.findIndex(p => p.id === userId) + 1;
+      yrXp.textContent = (me.weekly_xp || 0) + ' xp';
+      yrRank.textContent = rank ? '#' + rank : '#—';
+      yrSub.textContent = rank <= 3 ? 'you\'re in the top 3! 🔥' : rank <= 10 ? 'top 10 — keep going!' : 'practice daily to climb up ✦';
+    } else if (tab === 'alltime') {
+      const sorted = [...allProfiles].sort((a,b) => (b.xp||0) - (a.xp||0));
+      const rank = sorted.findIndex(p => p.id === userId) + 1;
+      yrXp.textContent = (me.xp || 0) + ' xp';
+      yrRank.textContent = rank ? '#' + rank : '#—';
+      yrSub.textContent = 'total xp earned';
+    } else {
+      const sorted = [...allProfiles].sort((a,b) => (b.streak||0) - (a.streak||0));
+      const rank = sorted.findIndex(p => p.id === userId) + 1;
+      yrXp.textContent = (me.streak || 0) + ' days';
+      yrRank.textContent = rank ? '#' + rank : '#—';
+      yrSub.textContent = 'current streak 🔥';
+    }
+  }
+
+  function getWeeklySorted() {
+    // calculate weekly XP from sessions this week
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    weekStart.setHours(0,0,0,0);
+
+    const weeklyXP = {};
+    weeklySessions.forEach(s => {
+      if (!weeklyXP[s.user_id]) weeklyXP[s.user_id] = 0;
+      weeklyXP[s.user_id] += (s.xp_earned || 0);
     });
 
-    allTimeBtn.addEventListener("click", function () {
-      setActiveTab(allTimeBtn);
-      loadLeaderboard("all_time");
+    return allProfiles
+      .map(p => ({ ...p, weekly_xp: weeklyXP[p.id] || 0 }))
+      .filter(p => p.weekly_xp > 0)
+      .sort((a,b) => b.weekly_xp - a.weekly_xp);
+  }
+
+  function renderPodium(sorted, xpKey) {
+    const podium = document.getElementById('podium');
+    podium.innerHTML = '';
+    const medals = ['🥇','🥈','🥉'];
+    const classes = ['first','second','third'];
+    const top3 = sorted.slice(0,3);
+    if (top3.length < 3) { podium.style.display = 'none'; return; }
+    podium.style.display = 'grid';
+
+    top3.forEach((p, i) => {
+      const el = document.createElement('div');
+      el.className = 'podium-card ' + classes[i];
+      el.innerHTML = `
+        <div class="podium-medal">${medals[i]}</div>
+        <div class="podium-avatar">${p.avatar || '🦋'}</div>
+        <div class="podium-name">${p.name || 'Chirrper'}</div>
+        <div class="podium-xp">${(p[xpKey] || 0).toLocaleString()}</div>
+        <div class="podium-lbl">${xpKey === 'weekly_xp' ? 'xp this week' : xpKey === 'xp' ? 'xp total' : 'day streak'}</div>`;
+      podium.appendChild(el);
     });
+  }
 
-    function setActiveTab(activeButton) {
-      weeklyBtn.classList.remove("active");
-      allTimeBtn.classList.remove("active");
-      activeButton.classList.add("active");
+  function renderList(containerId, sorted, xpKey, xpLabel) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    if (sorted.length === 0) {
+      container.innerHTML = '<div class="empty">no data yet — be the first to practice! ✦</div>';
+      return;
+    }
+    sorted.forEach((p, i) => {
+      const isYou = p.id === userId;
+      const el = document.createElement('div');
+      el.className = 'lb-row' + (isYou ? ' you' : '') + (i < 3 ? ' top3' : '');
+      const val = p[xpKey] || 0;
+      el.innerHTML = `
+        <div class="lb-rank">${i+1}</div>
+        <div class="lb-avatar">${p.avatar || '🦋'}</div>
+        <div class="lb-info">
+          <div class="lb-name">${p.name || 'Chirrper'}${isYou ? ' (you)' : ''}</div>
+          <div class="lb-meta">${p.username ? '@'+p.username : ''} ${p.streak ? '🔥 '+p.streak+' day streak' : ''}</div>
+        </div>
+        <div class="lb-right">
+          <div class="lb-xp">${val.toLocaleString()}</div>
+          <div class="lb-xp-lbl">${xpLabel}</div>
+        </div>`;
+      container.appendChild(el);
+    });
+  }
+
+  function renderStreaks(sorted) {
+    const container = document.getElementById('streaks-list');
+    container.innerHTML = '';
+    if (sorted.length === 0) {
+      container.innerHTML = '<div class="empty">no streaks yet — practice every day to build yours! ✦</div>';
+      return;
+    }
+    sorted.forEach((p, i) => {
+      const isYou = p.id === userId;
+      const el = document.createElement('div');
+      el.className = 'streak-row' + (isYou ? ' you' : '');
+      el.innerHTML = `
+        <div class="streak-fire">${i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : '🔥'}</div>
+        <div class="streak-info">
+          <div class="streak-name">${p.name || 'Chirrper'}${isYou ? ' (you)' : ''}</div>
+          <div class="streak-days">${p.streak || 0} day streak · ${p.username ? '@'+p.username : 'chirrper'}</div>
+        </div>
+        <div>
+          <div class="streak-num">${p.streak || 0}</div>
+          <div class="streak-lbl">days</div>
+        </div>`;
+      container.appendChild(el);
+    });
+  }
+
+  async function loadLeaderboard() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'signup.html'; return; }
+    userId = session.user.id;
+
+    // fetch all profiles
+    const { data: profiles } = await sb.from('profiles').select('*');
+    allProfiles = profiles || [];
+
+    // fetch this week's sessions from all tables
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    weekStart.setHours(0,0,0,0);
+    const weekStr = weekStart.toISOString();
+
+    const [{ data: practiceSess }, { data: interviewSess }, { data: munSess }] = await Promise.all([
+      sb.from('practice_sessions').select('user_id, xp_earned, created_at').gte('created_at', weekStr),
+      sb.from('interview_sessions').select('user_id, xp_earned, created_at').gte('created_at', weekStr),
+      sb.from('mun_sessions').select('user_id, xp_earned, created_at').gte('created_at', weekStr),
+    ]);
+    weeklySessions = [...(practiceSess||[]), ...(interviewSess||[]), ...(munSess||[])];
+
+    // stats
+    const activeThisWeek = new Set(weeklySessions.map(s => s.user_id)).size;
+    document.getElementById('stat-total').textContent = allProfiles.length;
+    document.getElementById('stat-active').textContent = activeThisWeek;
+    document.getElementById('stat-sessions').textContent = weeklySessions.length;
+
+    // weekly sorted
+    const weeklySorted = getWeeklySorted();
+    document.getElementById('weekly-count').textContent = weeklySorted.length + ' active this week';
+    document.getElementById('alltime-count').textContent = allProfiles.length + ' total chirrpers';
+    document.getElementById('streaks-count').textContent = allProfiles.filter(p => p.streak > 0).length + ' on a streak';
+
+    // render weekly
+    renderPodium(weeklySorted, 'weekly_xp');
+    renderList('weekly-list', weeklySorted, 'weekly_xp', 'xp this week');
+
+    // render alltime
+    const alltimeSorted = [...allProfiles].sort((a,b) => (b.xp||0) - (a.xp||0));
+    renderList('alltime-list', alltimeSorted, 'xp', 'xp total');
+
+    // render streaks
+    const streaksSorted = [...allProfiles].filter(p => p.streak > 0).sort((a,b) => (b.streak||0) - (a.streak||0));
+    renderStreaks(streaksSorted);
+
+    // your rank card
+    const me = allProfiles.find(p => p.id === userId);
+    if (me) {
+      document.getElementById('your-rank').style.display = 'flex';
+      document.getElementById('yr-avatar').textContent = me.avatar || '🦋';
+      document.getElementById('yr-name').textContent = me.name || 'you';
+      const meWithWeekly = weeklySorted.find(p => p.id === userId);
+      document.getElementById('yr-xp').textContent = (meWithWeekly?.weekly_xp || 0) + ' xp';
+      const rank = weeklySorted.findIndex(p => p.id === userId) + 1;
+      document.getElementById('yr-rank').textContent = rank ? '#' + rank : '#—';
+      document.getElementById('yr-sub').textContent = rank <= 3 ? 'you\'re in the top 3! 🔥' : rank <= 10 ? 'top 10 — keep going!' : 'practice daily to climb ✦';
     }
 
-    async function loadLeaderboard(period) {
-      body.innerHTML = '<div class="status">Loading leaderboard...</div>';
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+  }
 
-      const { data, error } = await client.rpc("get_mun_leaderboard", {
-        period: period
-      });
+  loadLeaderboard();
+</script>
 
-      if (error) {
-        console.error(error);
-        body.innerHTML = '<div class="status">Could not load leaderboard.</div>';
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        body.innerHTML = '<div class="status">No rankings yet.</div>';
-        return;
-      }
-
-      body.innerHTML = data.map(function (player) {
-        const rankClass =
-          player.rank === 1 ? "gold" :
-          player.rank === 2 ? "silver" :
-          player.rank === 3 ? "bronze" :
-          "";
-
-        const shortUserId = player.user_id.slice(0, 8);
-
-        return `
-          <div class="row">
-            <div class="rank ${rankClass}">#${player.rank}</div>
-            <div>Delegate ${shortUserId}</div>
-            <div class="num">${player.total_xp}</div>
-            <div class="num hide-mobile">${player.total_sessions}</div>
-            <div class="num hide-mobile">${player.speeches_made}</div>
-            <div class="num hide-mobile">${player.phases_completed}</div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    loadLeaderboard("weekly");
-  </script>
 </body>
 </html>
