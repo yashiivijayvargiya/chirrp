@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chirrp — group discussion</title>
+  <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Quicksand', sans-serif; background: #FEF0F5; color: #2A1A2E; min-height: 100vh; }
+
+    nav { background: #fff; border-bottom: 2px solid #F0D0E4; padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .logo { font-family: 'Righteous', cursive; font-size: 26px; color: #D63384; text-decoration: none; }
+    .logo span { color: #3AAFE0; }
+    .nav-back { font-size: 13px; font-weight: 700; color: #aaa; text-decoration: none; }
+    .nav-back:hover { color: #D63384; }
+
+    main { max-width: 760px; margin: 0 auto; padding: 32px 24px; }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .eyebrow { font-size: 11px; font-weight: 700; color: #D63384; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+    .page-title { font-family: 'Righteous', cursive; font-size: 32px; color: #2A1A2E; text-align: center; margin-bottom: 6px; }
+    .page-sub { font-size: 14px; color: #aaa; text-align: center; margin-bottom: 32px; line-height: 1.7; }
+
+    .card { background: #fff; border: 2px solid #F0D0E4; border-radius: 16px; padding: 22px; margin-bottom: 16px; }
+    .card-label { font-size: 11px; font-weight: 700; color: #D63384; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+    .card-title { font-family: 'Righteous', cursive; font-size: 18px; color: #2A1A2E; margin-bottom: 6px; }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .form-group label { font-size: 12px; font-weight: 700; color: #2A1A2E; letter-spacing: 0.5px; }
+    .form-group input, .form-group select { padding: 12px 14px; border: 2px solid #F0D0E4; border-radius: 12px; font-size: 13px; font-family: 'Quicksand', sans-serif; font-weight: 500; color: #2A1A2E; background: #fff; outline: none; transition: border-color 0.2s; }
+    .form-group input:focus, .form-group select:focus { border-color: #D63384; }
+    .form-group input::placeholder { color: #ccc; }
+
+    .btn-pink { width: 100%; background: #D63384; color: #fff; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; padding: 14px; border-radius: 14px; border: none; cursor: pointer; transition: background 0.2s; }
+    .btn-pink:hover { background: #c0226e; }
+    .btn-blue { width: 100%; background: #3AAFE0; color: #fff; font-family: 'Quicksand', sans-serif; font-size: 15px; font-weight: 700; padding: 14px; border-radius: 14px; border: none; cursor: pointer; }
+    .btn-blue:hover { background: #2290be; }
+
+    .msg { padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-bottom: 12px; display: none; }
+    .msg.error { background: #FEE8F0; color: #c0226e; border: 1.5px solid #F0A0C4; display: block; }
+    .msg.info { background: #EBF7FD; color: #1A7FAA; border: 1.5px solid #B8E4F5; display: block; }
+
+    /* SETUP */
+    .lobby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+    .topic-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .topic-tag { font-size: 11px; font-weight: 600; color: #888; background: #fff; border: 1.5px solid #F0D0E4; border-radius: 12px; padding: 5px 12px; cursor: pointer; transition: all 0.15s; }
+    .topic-tag:hover { border-color: #D63384; color: #D63384; }
+    .topic-tag.selected { background: #FEF0F5; border-color: #D63384; color: #D63384; }
+
+    .size-row { display: flex; gap: 10px; margin-bottom: 14px; }
+    .size-btn { flex: 1; padding: 12px; border: 2px solid #F0D0E4; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.15s; font-family: 'Quicksand', sans-serif; background: #fff; }
+    .size-btn:hover { border-color: #D63384; }
+    .size-btn.selected { background: #FEF0F5; border-color: #D63384; }
+    .size-num { font-family: 'Righteous', cursive; font-size: 20px; color: #D63384; }
+    .size-lbl { font-size: 11px; color: #aaa; font-weight: 600; }
+
+    /* WAITING */
+    .waiting-wrap { text-align: center; padding: 40px 20px; }
+    .waiting-icon { font-size: 52px; margin-bottom: 14px; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+    .waiting-title { font-family: 'Righteous', cursive; font-size: 26px; color: #2A1A2E; margin-bottom: 6px; }
+    .waiting-sub { font-size: 13px; color: #aaa; margin-bottom: 24px; }
+
+    .share-box { background: #EBF7FD; border: 2px solid #B8E4F5; border-radius: 14px; padding: 14px 16px; max-width: 480px; margin: 0 auto 20px; }
+    .share-label { font-size: 11px; font-weight: 700; color: #1A7FAA; letter-spacing: 1px; margin-bottom: 8px; }
+    .share-row { display: flex; gap: 8px; }
+    .share-input { flex: 1; padding: 10px 12px; border: 1.5px solid #B8E4F5; border-radius: 10px; font-size: 12px; font-family: 'Quicksand', sans-serif; background: #fff; color: #2A1A2E; outline: none; }
+    .copy-btn { background: #3AAFE0; color: #fff; border: none; border-radius: 10px; padding: 10px 14px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'Quicksand', sans-serif; }
+
+    .members-grid { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
+    .member-chip { background: #fff; border: 2px solid #F0D0E4; border-radius: 20px; padding: 7px 14px; font-size: 12px; font-weight: 700; color: #2A1A2E; display: flex; align-items: center; gap: 6px; }
+    .member-chip.you { border-color: #D63384; color: #D63384; background: #FEF0F5; }
+    .member-chip.empty { border-style: dashed; color: #ccc; }
+    .member-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+    .start-btn { background: #D63384; color: #fff; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; padding: 12px 28px; border-radius: 14px; border: none; cursor: pointer; margin-top: 8px; }
+    .topic-banner { background: #2A1A2E; border-radius: 12px; padding: 14px 18px; max-width: 480px; margin: 0 auto 16px; }
+    .tb-label { font-size: 10px; font-weight: 700; color: #F0A0C4; letter-spacing: 1px; margin-bottom: 5px; }
+    .tb-text { font-family: 'Righteous', cursive; font-size: 15px; color: #fff; line-height: 1.4; }
+
+    /* ROOM */
+    .room-header { background: #2A1A2E; border-radius: 16px; padding: 18px 22px; margin-bottom: 18px; }
+    .rh-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+    .rh-label { font-size: 10px; font-weight: 700; color: #F0A0C4; letter-spacing: 1px; margin-bottom: 4px; }
+    .rh-topic { font-family: 'Righteous', cursive; font-size: 17px; color: #fff; line-height: 1.35; max-width: 480px; }
+    .rh-timer { text-align: right; }
+    .rh-timer-num { font-family: 'Righteous', cursive; font-size: 28px; color: #D63384; }
+    .rh-timer-lbl { font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700; }
+    .rh-phase { display: inline-block; background: rgba(58,175,224,0.2); color: #3AAFE0; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 10px; letter-spacing: 1px; }
+
+    .members-row { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+    .member-badge { background: #fff; border: 2px solid #F0D0E4; border-radius: 10px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; flex: 1; min-width: 100px; transition: all 0.2s; }
+    .member-badge.speaking { border-color: #D63384; background: #FEF0F5; box-shadow: 0 0 0 3px rgba(214,51,132,0.1); }
+    .member-badge.you-badge { border-color: #3AAFE0; background: #EBF7FD; }
+    .mb-avatar { font-size: 18px; }
+    .mb-name { font-size: 12px; font-weight: 700; color: #2A1A2E; flex: 1; }
+    .mb-mic { font-size: 14px; }
+
+    /* VOICE BOX */
+    .voice-box { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 16px 18px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .vb-left { display: flex; align-items: center; gap: 10px; }
+    .vb-dot { width: 10px; height: 10px; border-radius: 50%; background: #D63384; animation: blink 1.5s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+    .vb-text { font-size: 13px; font-weight: 700; color: #2A1A2E; }
+    .vb-sub { font-size: 11px; color: #aaa; margin-top: 1px; }
+    .vb-btn { background: #D63384; color: #fff; font-family: 'Quicksand', sans-serif; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 10px; border: none; cursor: pointer; white-space: nowrap; }
+    .vb-btn:hover { background: #c0226e; }
+
+    /* SPEAKING ORDER */
+    .speaking-section { margin-bottom: 18px; }
+    .ss-label { font-size: 11px; font-weight: 700; color: #D63384; letter-spacing: 1.5px; margin-bottom: 10px; }
+    .speaker-cards { display: flex; flex-direction: column; gap: 8px; }
+    .speaker-row { background: #fff; border: 2px solid #F0D0E4; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+    .speaker-row.current { border-color: #D63384; background: #FEF0F5; }
+    .speaker-row.done { opacity: 0.5; }
+    .sp-num { font-family: 'Righteous', cursive; font-size: 16px; color: #D63384; min-width: 24px; }
+    .sp-name { font-size: 13px; font-weight: 700; color: #2A1A2E; flex: 1; }
+    .sp-status { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 8px; }
+    .sp-status.speaking { background: #D63384; color: #fff; }
+    .sp-status.waiting { background: #F5F5F5; color: #aaa; }
+    .sp-status.done { background: #EBF7FD; color: #3AAFE0; }
+    .sp-timer { font-family: 'Righteous', cursive; font-size: 14px; color: #D63384; }
+
+    /* CONTROLS */
+    .controls-card { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 16px 18px; }
+    .cc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .cc-turn { font-size: 13px; font-weight: 700; color: #2A1A2E; }
+    .cc-time { font-family: 'Righteous', cursive; font-size: 24px; color: #D63384; }
+    .waveform { display: flex; align-items: center; gap: 3px; height: 28px; margin-bottom: 12px; justify-content: center; }
+    .wave-bar { width: 4px; border-radius: 2px; background: #D63384; opacity: 0.15; }
+    .waveform.active .wave-bar { animation: wave 0.8s ease-in-out infinite; opacity: 0.7; }
+    @keyframes wave { 0%,100%{height:4px;} 50%{height:22px;} }
+    .cc-btns { display: flex; gap: 10px; }
+    .cc-btn { flex: 1; padding: 12px; border-radius: 12px; border: none; font-family: 'Quicksand', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .cc-btn.record { background: #D63384; color: #fff; }
+    .cc-btn.stop { background: #2A1A2E; color: #fff; }
+    .cc-btn.next { background: #3AAFE0; color: #fff; }
+    .cc-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .cc-note { font-size: 12px; color: #aaa; text-align: center; margin-top: 10px; font-weight: 600; }
+
+    /* DONE */
+    .done-wrap { text-align: center; padding: 20px; }
+    .done-icon { font-size: 60px; margin-bottom: 14px; }
+    .done-title { font-family: 'Righteous', cursive; font-size: 30px; color: #2A1A2E; margin-bottom: 6px; }
+    .done-sub { font-size: 14px; color: #aaa; margin-bottom: 28px; }
+    .done-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 24px; }
+    .ds-card { background: #fff; border: 2px solid #F0D0E4; border-radius: 14px; padding: 16px; text-align: center; }
+    .ds-num { font-family: 'Righteous', cursive; font-size: 28px; color: #D63384; }
+    .ds-lbl { font-size: 11px; font-weight: 700; color: #aaa; margin-top: 3px; }
+    .done-btns { display: flex; gap: 12px; }
+    .btn-dash { flex: 1; background: #D63384; color: #fff; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; padding: 13px; border-radius: 14px; border: none; cursor: pointer; }
+    .btn-again { flex: 1; background: transparent; color: #D63384; font-family: 'Quicksand', sans-serif; font-size: 14px; font-weight: 700; padding: 13px; border-radius: 14px; border: 2px solid #D63384; cursor: pointer; }
+
+    @media (max-width: 500px) {
+      .lobby-grid { grid-template-columns: 1fr; }
+      .done-stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">chir<span>rp</span></a>
+  <a href="dashboard.html" class="nav-back">← dashboard</a>
+</nav>
+
+<main>
+
+  <!-- SCREEN 1: SETUP -->
+  <div class="screen active" id="screen-setup">
+    <div class="eyebrow">group discussion</div>
+    <h1 class="page-title">start a GD room ✦</h1>
+    <p class="page-sub">pick a topic, invite 3–5 people, and discuss live. structured speaking turns, timed, and tracked.</p>
+
+    <div id="msg-setup" class="msg"></div>
+
+    <div class="lobby-grid">
+      <div class="card">
+        <div class="card-label">create a room</div>
+        <div class="form-group">
+          <label>YOUR NAME</label>
+          <input type="text" id="creator-name" placeholder="your name" />
+        </div>
+        <div class="form-group">
+          <label>TOPIC</label>
+          <select id="topic-select">
+            <option value="">— pick a topic —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>OR TYPE YOUR OWN TOPIC</label>
+          <input type="text" id="custom-topic" placeholder="type a custom topic..." />
+        </div>
+        <div class="form-group">
+          <label>SPEAKING TIME PER PERSON</label>
+          <div class="size-row">
+            <div class="size-btn selected" id="time-90" onclick="selectTime(90)">
+              <div class="size-num">90s</div>
+              <div class="size-lbl">quick GD</div>
+            </div>
+            <div class="size-btn" id="time-120" onclick="selectTime(120)">
+              <div class="size-num">2 min</div>
+              <div class="size-lbl">standard</div>
+            </div>
+            <div class="size-btn" id="time-180" onclick="selectTime(180)">
+              <div class="size-num">3 min</div>
+              <div class="size-lbl">detailed</div>
+            </div>
+          </div>
+        </div>
+        <button class="btn-pink" onclick="createRoom()">create room ✦</button>
+      </div>
+
+      <div class="card">
+        <div class="card-label">join a room</div>
+        <div class="form-group">
+          <label>YOUR NAME</label>
+          <input type="text" id="joiner-name" placeholder="your name" />
+        </div>
+        <div class="form-group">
+          <label>ROOM CODE OR LINK</label>
+          <input type="text" id="join-code" placeholder="paste code or full link" />
+        </div>
+        <button class="btn-blue" onclick="joinRoom()">join GD ✦</button>
+
+        <div style="margin-top:20px;padding-top:16px;border-top:2px solid #F0D0E4;">
+          <div class="card-label">topic ideas</div>
+          <div class="topic-tags" id="topic-tags"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: WAITING -->
+  <div class="screen" id="screen-waiting">
+    <div class="waiting-wrap">
+      <div class="waiting-icon">💬</div>
+      <div class="waiting-title">room created ✦</div>
+      <div class="waiting-sub">share the link — up to 5 people can join. start whenever you're ready.</div>
+      <div class="topic-banner">
+        <div class="tb-label">TOPIC</div>
+        <div class="tb-text" id="waiting-topic"></div>
+      </div>
+      <div class="share-box">
+        <div class="share-label">SHARE WITH YOUR GROUP</div>
+        <div class="share-row">
+          <input class="share-input" id="share-link" readonly />
+          <button class="copy-btn" onclick="copyLink()">copy</button>
+        </div>
+      </div>
+      <div class="members-grid" id="members-preview"></div>
+      <div style="font-size:12px;color:#aaa;font-weight:600;margin-bottom:12px;" id="member-count-lbl">1 of 5 joined</div>
+      <button class="start-btn" onclick="startGD()">start discussion ✦</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: GD ROOM -->
+  <div class="screen" id="screen-room">
+    <div class="room-header">
+      <div class="rh-top">
+        <div>
+          <div class="rh-label">GROUP DISCUSSION</div>
+          <div class="rh-topic" id="rh-topic">—</div>
+        </div>
+        <div class="rh-timer">
+          <div class="rh-timer-num" id="rh-timer">20:00</div>
+          <div class="rh-timer-lbl">session time</div>
+        </div>
+      </div>
+      <span class="rh-phase" id="rh-phase">ROUND 1 — OPENING STATEMENTS</span>
+    </div>
+
+    <div class="members-row" id="room-members"></div>
+
+    <div class="voice-box">
+      <div class="vb-left">
+        <div class="vb-dot"></div>
+        <div>
+          <div class="vb-text">voice call ready</div>
+          <div class="vb-sub" id="vb-sub">click to open audio room — all members use the same link</div>
+        </div>
+      </div>
+      <button class="vb-btn" id="vb-btn" onclick="openVoice()">🎙 join voice</button>
+    </div>
+
+    <div class="speaking-section">
+      <div class="ss-label">SPEAKING ORDER</div>
+      <div class="speaker-cards" id="speaker-cards"></div>
+    </div>
+
+    <div class="controls-card">
+      <div class="cc-top">
+        <div class="cc-turn" id="cc-turn">your turn to speak</div>
+        <div class="cc-time" id="cc-time">1:30</div>
+      </div>
+      <div class="waveform" id="cc-waveform">
+        <div class="wave-bar" style="animation-delay:0s"></div>
+        <div class="wave-bar" style="animation-delay:0.1s"></div>
+        <div class="wave-bar" style="animation-delay:0.2s"></div>
+        <div class="wave-bar" style="animation-delay:0.3s"></div>
+        <div class="wave-bar" style="animation-delay:0.4s"></div>
+        <div class="wave-bar" style="animation-delay:0.5s"></div>
+        <div class="wave-bar" style="animation-delay:0.6s"></div>
+        <div class="wave-bar" style="animation-delay:0.3s"></div>
+        <div class="wave-bar" style="animation-delay:0.1s"></div>
+        <div class="wave-bar" style="animation-delay:0.5s"></div>
+      </div>
+      <div class="cc-btns">
+        <button class="cc-btn record" id="btn-record" onclick="startRecording()">🎙 record speech</button>
+        <button class="cc-btn stop" id="btn-stop" onclick="stopRecording()" disabled>⏹ done</button>
+        <button class="cc-btn next" id="btn-next" onclick="nextSpeaker()" style="display:none;">next →</button>
+      </div>
+      <div class="cc-note" id="cc-note">when it's your turn, record your point — clear and confident</div>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: DONE -->
+  <div class="screen" id="screen-done">
+    <div class="done-wrap">
+      <div class="done-icon">🎉</div>
+      <div class="done-title">GD complete! ✦</div>
+      <div class="done-sub">great discussion. here's how your session went.</div>
+      <div class="done-stats">
+        <div class="ds-card"><div class="ds-num" id="done-members">0</div><div class="ds-lbl">participants</div></div>
+        <div class="ds-card"><div class="ds-num" id="done-rounds">0</div><div class="ds-lbl">rounds done</div></div>
+        <div class="ds-card"><div class="ds-num" id="done-xp" style="color:#3AAFE0;">+0</div><div class="ds-lbl">xp earned</div></div>
+      </div>
+      <div class="done-btns">
+        <button class="btn-dash" onclick="window.location.href='dashboard.html'">dashboard</button>
+        <button class="btn-again" onclick="location.reload()">new GD</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  const { createClient } = supabase;
+  const sb = createClient(
+    'https://mkjhrlsxmakbnxqrrvlu.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ramhybHN4bWFrYm54cXJydmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNjcyNTMsImV4cCI6MjA5Njk0MzI1M30.fH_ZoJPYnNGwHX6gPELYIIApe9EzZt6SYlb8wPMeMtI'
+  );
+
+  const gdTopics = [
+    "Social media is making us less social",
+    "Work from home is the future of employment",
+    "AI will do more good than harm for society",
+    "College degrees are overrated",
+    "Climate change is the defining challenge of our generation",
+    "Entrepreneurship is better than a corporate career",
+    "India is ready for a cashless economy",
+    "Cancel culture has gone too far",
+    "The 4-day work week should be implemented globally",
+    "Mental health should be taught in schools",
+    "Is India's education system preparing students for the real world?",
+    "Social media influencers have too much power over young people",
+    "Should voting be mandatory in a democracy?",
+    "Fast fashion needs to be regulated by law",
+    "Technology is widening the gap between rich and poor",
+    "Is hustle culture toxic?",
+    "Should celebrities be held to higher moral standards?",
+    "Are gap years beneficial for students?",
+    "Is remote work killing team culture?",
+    "Should junk food be taxed like cigarettes?",
+  ];
+
+  // populate select + tags
+  const sel = document.getElementById('topic-select');
+  const tags = document.getElementById('topic-tags');
+  gdTopics.forEach((t, i) => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    sel.appendChild(opt);
+    const tag = document.createElement('span');
+    tag.className = 'topic-tag'; tag.textContent = t;
+    tag.onclick = () => {
+      document.querySelectorAll('.topic-tag').forEach(x => x.classList.remove('selected'));
+      tag.classList.add('selected');
+      sel.value = t;
+      document.getElementById('custom-topic').value = '';
+    };
+    tags.appendChild(tag);
+  });
+
+  // STATE
+  let roomCode = null, myName = null, speakingTime = 90;
+  let allMembers = [], currentSpeakerIdx = 0, currentRound = 0;
+  let timerInterval = null, sessionTimerInterval = null;
+  let mediaRecorder = null, audioChunks = [];
+  let voiceUrl = null, userId = null, userProfile = null;
+  let roomEntered = false, pollInterval = null;
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'signup.html'; return; }
+    userId = session.user.id;
+    const { data: p } = await sb.from('profiles').select('*').eq('id', userId).single();
+    userProfile = p;
+
+    // check URL for room code
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomParam = urlParams.get('room');
+    if (roomParam) {
+      document.getElementById('join-code').value = roomParam;
+    }
+  }
+  init();
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  function selectTime(t) {
+    speakingTime = t;
+    [90,120,180].forEach(x => document.getElementById('time-'+x).classList.toggle('selected', x === t));
+  }
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text; el.className = 'msg ' + type; el.style.display = 'block';
+  }
+
+  function genCode() { return Math.random().toString(36).substring(2,8).toUpperCase(); }
+
+  async function createRoom() {
+    const name = document.getElementById('creator-name').value.trim();
+    const customTopic = document.getElementById('custom-topic').value.trim();
+    const selectedTopic = sel.value;
+    const topic = customTopic || selectedTopic;
+    if (!name) { showMsg('msg-setup', 'please enter your name!', 'error'); return; }
+    if (!topic) { showMsg('msg-setup', 'please pick or type a topic!', 'error'); return; }
+
+    roomCode = genCode();
+    myName = name;
+    const members = [{ name, isHost: true, id: userId }];
+
+    // create Daily.co voice room via API
+    try {
+      const res = await fetch('/api/create-room', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomName: 'chirrp-gd-' + roomCode.toLowerCase() })
+      });
+      const data = await res.json();
+      if (data.url) voiceUrl = data.url;
+    } catch(e) { console.warn('voice room creation failed'); }
+
+    await sb.from('gd_rooms').insert({
+      code: roomCode,
+      topic,
+      host_name: name,
+      host_id: userId,
+      members: JSON.stringify(members),
+      speaking_time: speakingTime,
+      voice_url: voiceUrl,
+      status: 'waiting',
+      current_speaker: 0,
+      current_round: 0,
+      created_at: new Date().toISOString()
+    });
+
+    const link = window.location.origin + '/gd.html?room=' + roomCode;
+    document.getElementById('share-link').value = link;
+    document.getElementById('waiting-topic').textContent = '"' + topic + '"';
+    updateMembersPreview(members);
+    showScreen('screen-waiting');
+    subscribeToRoom(roomCode);
+  }
+
+  async function joinRoom() {
+    let code = document.getElementById('join-code').value.trim().toUpperCase();
+    const name = document.getElementById('joiner-name').value.trim();
+    if (code.includes('ROOM=')) code = new URLSearchParams(code.split('?')[1]).get('ROOM');
+    if (!code) { showMsg('msg-setup', 'please enter a room code!', 'error'); return; }
+    if (!name) { showMsg('msg-setup', 'please enter your name!', 'error'); return; }
+
+    const { data: room } = await sb.from('gd_rooms').select('*').eq('code', code).single();
+    if (!room) { showMsg('msg-setup', 'room not found! check the code.', 'error'); return; }
+    if (room.status === 'active') { showMsg('msg-setup', 'this GD has already started!', 'error'); return; }
+
+    myName = name; roomCode = code;
+    voiceUrl = room.voice_url;
+
+    const members = typeof room.members === 'string' ? JSON.parse(room.members) : room.members;
+    if (members.length >= 5) { showMsg('msg-setup', 'this room is full (max 5 people)!', 'error'); return; }
+    members.push({ name, isHost: false, id: userId });
+    await sb.from('gd_rooms').update({ members: JSON.stringify(members) }).eq('code', code);
+
+    document.getElementById('share-link').value = window.location.origin + '/gd.html?room=' + code;
+    document.getElementById('waiting-topic').textContent = '"' + room.topic + '"';
+    updateMembersPreview(members);
+    showScreen('screen-waiting');
+    subscribeToRoom(code);
+  }
+
+  function updateMembersPreview(members) {
+    const grid = document.getElementById('members-preview');
+    grid.innerHTML = '';
+    for (let i = 0; i < 5; i++) {
+      const el = document.createElement('div');
+      if (members[i]) {
+        el.className = 'member-chip' + (members[i].isHost ? ' you' : '');
+        el.innerHTML = `<div class="member-dot"></div>${members[i].name}${members[i].isHost ? ' (you)' : ''}`;
+      } else {
+        el.className = 'member-chip empty';
+        el.innerHTML = `<div class="member-dot"></div>waiting...`;
+      }
+      grid.appendChild(el);
+    }
+    document.getElementById('member-count-lbl').textContent = members.length + ' of 5 joined';
+  }
+
+  function subscribeToRoom(code) {
+    sb.channel('gd-' + code)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'gd_rooms', filter: 'code=eq.' + code }, (payload) => {
+        const members = typeof payload.new.members === 'string' ? JSON.parse(payload.new.members) : payload.new.members;
+        updateMembersPreview(members);
+        if (payload.new.status === 'active' && !roomEntered) {
+          roomEntered = true;
+          clearInterval(pollInterval);
+          launchRoom(payload.new);
+        }
+      }).subscribe();
+
+    pollInterval = setInterval(async () => {
+      const { data: room } = await sb.from('gd_rooms').select('*').eq('code', code).single();
+      if (!room) return;
+      const members = typeof room.members === 'string' ? JSON.parse(room.members) : room.members;
+      updateMembersPreview(members);
+      if (room.status === 'active' && !roomEntered) {
+        roomEntered = true;
+        clearInterval(pollInterval);
+        launchRoom(room);
+      }
+    }, 2000);
+  }
+
+  async function startGD() {
+    const { data: room } = await sb.from('gd_rooms').select('*').eq('code', roomCode).single();
+    await sb.from('gd_rooms').update({ status: 'active' }).eq('code', roomCode);
+    launchRoom(room);
+  }
+
+  function launchRoom(room) {
+    const members = typeof room.members === 'string' ? JSON.parse(room.members) : room.members;
+    allMembers = members;
+    voiceUrl = room.voice_url || voiceUrl;
+    speakingTime = room.speaking_time || 90;
+
+    document.getElementById('rh-topic').textContent = '"' + room.topic + '"';
+    if (voiceUrl) {
+      document.getElementById('vb-sub').textContent = 'click to open audio — all members use the same voice room';
+    } else {
+      document.getElementById('vb-btn').textContent = '🎙 voice unavailable';
+      document.getElementById('vb-btn').disabled = true;
+    }
+
+    renderRoomMembers();
+    renderSpeakerCards();
+    showScreen('screen-room');
+    startSessionTimer(room.speaking_time * members.length * 2);
+    loadSpeaker(0);
+
+    // poll for speaker changes
+    setInterval(async () => {
+      const { data: r } = await sb.from('gd_rooms').select('current_speaker,current_round,status').eq('code', roomCode).single();
+      if (!r || r.status === 'ended') { endGD(); return; }
+      if (r.current_speaker !== currentSpeakerIdx || r.current_round !== currentRound) {
+        currentSpeakerIdx = r.current_speaker;
+        currentRound = r.current_round;
+        renderSpeakerCards();
+        loadSpeaker(currentSpeakerIdx);
+      }
+    }, 2000);
+  }
+
+  function renderRoomMembers() {
+    const row = document.getElementById('room-members');
+    row.innerHTML = '';
+    allMembers.forEach((m, i) => {
+      const isMe = m.name === myName;
+      const isSpeaking = i === currentSpeakerIdx;
+      const el = document.createElement('div');
+      el.className = 'member-badge' + (isSpeaking ? ' speaking' : '') + (isMe ? ' you-badge' : '');
+      el.id = 'mb-' + i;
+      el.innerHTML = `<div class="mb-avatar">👤</div><div class="mb-name">${m.name}${isMe ? ' (you)' : ''}</div><div class="mb-mic">${isSpeaking ? '🎙' : ''}</div>`;
+      row.appendChild(el);
+    });
+  }
+
+  function renderSpeakerCards() {
+    const cards = document.getElementById('speaker-cards');
+    cards.innerHTML = '';
+    allMembers.forEach((m, i) => {
+      const el = document.createElement('div');
+      const isDone = i < currentSpeakerIdx || (currentRound > 0 && i <= currentSpeakerIdx);
+      el.className = 'speaker-row' + (i === currentSpeakerIdx ? ' current' : '') + (isDone ? ' done' : '');
+      el.innerHTML = `
+        <div class="sp-num">${i+1}</div>
+        <div class="sp-name">${m.name}${m.name === myName ? ' (you)' : ''}</div>
+        <div class="sp-status ${i === currentSpeakerIdx ? 'speaking' : isDone ? 'done' : 'waiting'}">
+          ${i === currentSpeakerIdx ? '🎙 speaking' : isDone ? '✓ done' : 'waiting'}
+        </div>`;
+      cards.appendChild(el);
+    });
+  }
+
+  function loadSpeaker(idx) {
+    const speaker = allMembers[idx];
+    const isMe = speaker && speaker.name === myName;
+    const m = Math.floor(speakingTime / 60), s = (speakingTime % 60).toString().padStart(2,'0');
+    document.getElementById('cc-time').textContent = m + ':' + s;
+    document.getElementById('btn-record').disabled = !isMe;
+    document.getElementById('btn-stop').disabled = true;
+    document.getElementById('btn-next').style.display = 'none';
+    document.getElementById('cc-waveform').classList.remove('active');
+
+    if (isMe) {
+      document.getElementById('cc-turn').textContent = 'your turn to speak ✦';
+      document.getElementById('cc-note').textContent = 'record your point — clear, confident, and structured';
+      document.getElementById('btn-record').style.display = 'block';
+    } else {
+      document.getElementById('cc-turn').textContent = speaker ? speaker.name + ' is speaking...' : 'GD in progress';
+      document.getElementById('cc-note').textContent = 'listen carefully — prepare your response for when it\'s your turn';
+      document.getElementById('btn-record').style.display = 'none';
+      document.getElementById('btn-next').style.display = allMembers[idx]?.isHost || allMembers[0]?.name === myName ? 'block' : 'none';
+    }
+
+    renderRoomMembers();
+    clearInterval(timerInterval);
+    let remaining = speakingTime;
+    timerInterval = setInterval(() => {
+      remaining--;
+      const mm = Math.floor(remaining / 60), ss = (remaining % 60).toString().padStart(2,'0');
+      document.getElementById('cc-time').textContent = mm + ':' + ss;
+      if (remaining <= 0) { clearInterval(timerInterval); if (isMe) nextSpeaker(); }
+    }, 1000);
+  }
+
+  function startSessionTimer(totalSecs) {
+    let remaining = totalSecs;
+    sessionTimerInterval = setInterval(() => {
+      remaining--;
+      const mm = Math.floor(remaining / 60), ss = (remaining % 60).toString().padStart(2,'0');
+      document.getElementById('rh-timer').textContent = mm + ':' + ss;
+      if (remaining <= 0) { clearInterval(sessionTimerInterval); endGD(); }
+    }, 1000);
+  }
+
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = () => {
+        document.getElementById('btn-record').style.display = 'none';
+        document.getElementById('btn-next').style.display = 'block';
+        document.getElementById('cc-note').textContent = 'speech recorded! click next when ready to pass to the next speaker.';
+      };
+      mediaRecorder.start();
+      document.getElementById('btn-record').disabled = true;
+      document.getElementById('btn-stop').disabled = false;
+      document.getElementById('cc-waveform').classList.add('active');
+      document.getElementById('cc-note').textContent = 'recording... speak your point clearly 🎙';
+    } catch(e) {
+      document.getElementById('cc-note').textContent = 'mic access needed — allow in browser settings';
+    }
+  }
+
+  function stopRecording() {
+    clearInterval(timerInterval);
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    }
+    document.getElementById('cc-waveform').classList.remove('active');
+    document.getElementById('btn-stop').disabled = true;
+  }
+
+  async function nextSpeaker() {
+    clearInterval(timerInterval);
+    stopRecording();
+    const nextIdx = currentSpeakerIdx + 1;
+    if (nextIdx >= allMembers.length) {
+      currentRound++;
+      currentSpeakerIdx = 0;
+      document.getElementById('rh-phase').textContent = 'ROUND ' + (currentRound + 1) + ' — OPEN DISCUSSION';
+      if (currentRound >= 2) { await sb.from('gd_rooms').update({ status: 'ended' }).eq('code', roomCode); endGD(); return; }
+      await sb.from('gd_rooms').update({ current_speaker: 0, current_round: currentRound }).eq('code', roomCode);
+    } else {
+      currentSpeakerIdx = nextIdx;
+      await sb.from('gd_rooms').update({ current_speaker: nextIdx }).eq('code', roomCode);
+    }
+    renderSpeakerCards();
+    loadSpeaker(currentSpeakerIdx);
+  }
+
+  function openVoice() {
+    if (!voiceUrl) return;
+    window.open(voiceUrl + '?userName=' + encodeURIComponent(myName), 'chirrp-gd-voice', 'width=420,height=300,left=50,top=50');
+    document.getElementById('vb-btn').textContent = '🔊 rejoin voice';
+    document.getElementById('vb-sub').textContent = 'voice room is open in a separate window ✦';
+  }
+
+  async function endGD() {
+    clearInterval(timerInterval);
+    clearInterval(sessionTimerInterval);
+    const xp = 100 + (currentRound * 30);
+    document.getElementById('done-members').textContent = allMembers.length;
+    document.getElementById('done-rounds').textContent = currentRound + 1;
+    document.getElementById('done-xp').textContent = '+' + xp;
+    if (userId) {
+      await sb.from('gd_sessions').insert({
+        user_id: userId, members_count: allMembers.length,
+        rounds: currentRound + 1, xp_earned: xp, created_at: new Date().toISOString()
+      });
+      const { data: p } = await sb.from('profiles').select('xp').eq('id', userId).single();
+      await sb.from('profiles').update({ xp: (p?.xp || 0) + xp }).eq('id', userId);
+    }
+    showScreen('screen-done');
+  }
+
+  function copyLink() {
+    const val = document.getElementById('share-link').value;
+    const btn = document.querySelector('.copy-btn');
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(val).then(() => { btn.textContent = 'copied!'; setTimeout(() => btn.textContent = 'copy', 2000); });
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = val; ta.style.cssText = 'position:fixed;left:-9999px;opacity:0;';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      try { document.execCommand('copy'); btn.textContent = 'copied!'; setTimeout(() => btn.textContent = 'copy', 2000); } catch(e) { window.prompt('Copy:', val); }
+      document.body.removeChild(ta);
+    }
+  }
+</script>
+
+</body>
+</html>
