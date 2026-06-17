@@ -296,7 +296,10 @@
       btn.textContent = 'log in ✦';
     } else {
       showMsg('welcome back! redirecting...', 'success');
-      setTimeout(() => window.location.href = 'dashboard.html', 1000);
+      // redirect back to original page if came from a room link
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get('next');
+      setTimeout(() => window.location.href = next || 'dashboard.html', 1000);
     }
   }
 
