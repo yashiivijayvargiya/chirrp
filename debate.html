@@ -562,13 +562,18 @@
     if (joinerPreferredSide !== creatorSide) {
       mySide = joinerPreferredSide;
     } else {
-      // conflict — assign opposite
       mySide = creatorSide === "for" ? "against" : "for";
     }
-    await sb.from("debate_rooms").update({ joiner_name: name, joiner_side: mySide, status: "active" }).eq("code", code);
+
+    try {
+      await sb.from("debate_rooms").update({ joiner_name: name, status: "active" }).eq("code", code);
+    } catch(e) {
+      console.warn("update error:", e);
+    }
 
     document.getElementById("lobby").style.display = "none";
-    enterRoom(room.topic, room.creator_name, name, room.daily_url);
+    // pass sides so each person sees correct for/against
+    enterRoom(room.topic, room.creator_name, name, room.daily_url, creatorSide, mySide);
   }
 
   // SUBSCRIBE (realtime + poll)
@@ -579,7 +584,7 @@
           roomEntered = true;
           clearInterval(pollInterval);
           document.getElementById("waiting").style.display = "none";
-          enterRoom(payload.new.topic, payload.new.creator_name, payload.new.joiner_name, payload.new.daily_url);
+          enterRoom(payload.new.topic, payload.new.creator_name, payload.new.joiner_name, payload.new.daily_url, payload.new.creator_side || "for", mySide);
         }
       }).subscribe();
 
@@ -590,17 +595,18 @@
         roomEntered = true;
         clearInterval(pollInterval);
         document.getElementById("waiting").style.display = "none";
-        enterRoom(room.topic, room.creator_name, room.joiner_name, room.daily_url);
+        enterRoom(room.topic, room.creator_name, room.joiner_name, room.daily_url, room.creator_side || "for", mySide);
       }
     }, 2000);
   }
 
   // ENTER ROOM
-  function enterRoom(topic, forName, againstName, dailyUrl) {
+  function enterRoom(topic, forName, againstName, dailyUrl, forSide, againstSide) {
     document.getElementById("room").style.display = "block";
     document.getElementById("room-topic-text").textContent = "\"" + topic + "\"";
-    document.getElementById("pv-for-name").textContent = forName;
-    document.getElementById("pv-against-name").textContent = againstName;
+    // forName is always creator — show based on actual sides
+    document.getElementById("pv-for-name").textContent = forSide === "for" ? forName : againstName;
+    document.getElementById("pv-against-name").textContent = forSide === "against" ? forName : againstName;
     document.getElementById("recap-topic").textContent = topic;
     document.getElementById("recap-side").textContent = mySide === "for" ? "FOR" : "AGAINST";
 
