@@ -6,7 +6,7 @@
   <title>Chirrp — debate room</title>
   <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://unpkg.com/@daily-co/daily-js"></script>
+  
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: "Quicksand", sans-serif; background: #FEF0F5; color: #2A1A2E; min-height: 100vh; }
@@ -634,11 +634,11 @@
     startRound(0);
   }
 
-  // VOICE CALL — opens Daily.co room in a small popup (free, no embedding needed)
-  let dailyUrl = null;
+  // VOICE CALL — Whereby embedded iframe (free tier, 2000 mins/month)
+  let wherebyUrl = null;
 
   function joinDailyCall(url) {
-    dailyUrl = url;
+    wherebyUrl = url;
     document.getElementById("voice-status").textContent = "● ready — click to join";
     document.getElementById("voice-status").className = "voice-status live";
     document.getElementById("voice-hint").textContent = 
@@ -646,18 +646,35 @@
   }
 
   function openVoiceCall() {
-    if (!dailyUrl) return;
-    const popup = window.open(
-      dailyUrl + "?userName=" + encodeURIComponent(myName) + "&v=1",
-      "chirrp-voice",
-      "width=420,height=300,left=50,top=50,toolbar=no,menubar=no"
-    );
-    if (popup) {
-      document.getElementById("voice-status").textContent = "● voice call open";
-      document.getElementById("voice-btn").textContent = "🔊 rejoin voice call";
-      document.getElementById("voice-hint").textContent = 
-        "voice call is open in a separate window — keep it open while you debate ✦";
+    if (!wherebyUrl) {
+      document.getElementById("voice-hint").textContent = "voice room not set up — debate continues without voice";
+      return;
     }
+    // embed Whereby in a floating iframe
+    const existing = document.getElementById("whereby-frame");
+    if (existing) { existing.style.display = "block"; return; }
+
+    const wrap = document.createElement("div");
+    wrap.id = "whereby-frame";
+    wrap.style.cssText = "position:fixed;bottom:80px;right:20px;width:360px;height:240px;border-radius:14px;overflow:hidden;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,0.25);border:2px solid #D63384;";
+
+    const iframe = document.createElement("iframe");
+    iframe.src = wherebyUrl + "?minimal=1&skipMediaPermissionPrompt=1&displayName=" + encodeURIComponent(myName);
+    iframe.allow = "camera; microphone; fullscreen; speaker; display-capture";
+    iframe.style.cssText = "width:100%;height:100%;border:none;";
+    wrap.appendChild(iframe);
+
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "✕";
+    closeBtn.style.cssText = "position:absolute;top:6px;right:8px;background:#D63384;color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:12px;font-weight:700;z-index:1000;";
+    closeBtn.onclick = () => wrap.style.display = "none";
+    wrap.appendChild(closeBtn);
+
+    document.body.appendChild(wrap);
+
+    document.getElementById("voice-status").textContent = "● live";
+    document.getElementById("voice-btn").textContent = "🔊 show voice window";
+    document.getElementById("voice-hint").textContent = "voice call is running bottom-right — keep it open ✦";
   }
 
   function openVoiceCallAlias() { openVoiceCall(); }
