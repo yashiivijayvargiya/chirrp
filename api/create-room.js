@@ -8,7 +8,8 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
-  const DAILY_API_KEY = process.env.DAILY_API_KEY || '8e80009a8a7aa965ec1a39f86cd7f8e2f502e755b112431fafb4fc33340e6680';
+  const WHEREBY_API_KEY = process.env.WHEREBY_API_KEY;
+  if (!WHEREBY_API_KEY) return res.status(500).json({ error: 'WHEREBY_API_KEY not set' });
 
   let roomName;
   try {
@@ -18,25 +19,21 @@ module.exports = async function handler(req, res) {
     roomName = 'chirrp-' + Date.now();
   }
 
+  // Whereby room expires in 4 hours
+  const endDate = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
+
   const payload = JSON.stringify({
-    name: roomName,
-    properties: {
-      max_participants: 2,
-      enable_chat: false,
-      enable_screenshare: false,
-      start_video_off: true,
-      start_audio_off: false,
-      exp: Math.round(Date.now() / 1000) + 3600
-    }
+    endDate,
+    fields: ['hostRoomUrl']
   });
 
   const options = {
-    hostname: 'api.daily.co',
-    path: '/v1/rooms',
+    hostname: 'api.whereby.dev',
+    path: '/v1/meetings',
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + DAILY_API_KEY,
+      'Authorization': 'Bearer ' + WHEREBY_API_KEY,
       'Content-Length': Buffer.byteLength(payload)
     }
   };
@@ -48,23 +45,25 @@ module.exports = async function handler(req, res) {
       response.on('end', () => {
         try {
           const parsed = JSON.parse(data);
-          if (response.statusCode !== 200) {
-            res.status(500).json({ error: parsed.error || 'Daily API error', details: parsed });
+          if (response.statusCode !== 201) {
+            res.status(500).json({ error: parsed.error || 'Whereby API error', details: parsed });
           } else {
-            res.status(200).json({ url: parsed.url, name: parsed.name });
+            res.status(200).json({ 
+              url: parsed.roomUrl,
+              hostUrl: parsed.hostRoomUrl,
+              name: roomName
+            });
           }
         } catch (e) {
-          res.status(500).json({ error: 'Failed to parse Daily response', raw: data });
+          res.status(500).json({ error: 'Failed to parse response', raw: data });
         }
         resolve();
       });
     });
-
     request.on('error', (e) => {
       res.status(500).json({ error: e.message });
       resolve();
     });
-
     request.write(payload);
     request.end();
   });
