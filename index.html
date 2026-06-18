@@ -1,4 +1,8 @@
+Replace your current `index.html` with this updated version.
 
+It changes the progress area so it looks like a **dashboard preview**, not real account data. No fake `12 day streak`, no fake percentages like `72%`.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -294,7 +298,8 @@
     }
 
     .step h3,
-    .mode h3 {
+    .mode h3,
+    .preview-title {
       font-size: 24px;
       margin-bottom: 10px;
     }
@@ -360,13 +365,6 @@
       padding: 30px;
     }
 
-    .streak-number {
-      font-family: "Righteous", cursive;
-      font-size: 62px;
-      color: #d63384;
-      line-height: 1;
-    }
-
     .days {
       display: flex;
       gap: 10px;
@@ -406,6 +404,11 @@
       justify-content: space-between;
       font-weight: 800;
       margin-bottom: 7px;
+    }
+
+    .skill-top span:last-child {
+      color: #d63384;
+      font-size: 13px;
     }
 
     .bar {
@@ -688,38 +691,45 @@
 
     <section class="progress">
       <div class="progress-card card">
-        <div class="label">progress preview</div>
-        <div class="streak-number">12</div>
-        <p>day streak with today's practice waiting.</p>
+        <div class="label">dashboard preview</div>
+        <h3 class="preview-title">track your streak</h3>
+        <p>
+          After signing up, your dashboard will show your daily practice streak,
+          completed sessions, and XP earned from speaking activities.
+        </p>
 
         <div class="days">
           <div class="day done">M</div>
           <div class="day done">T</div>
           <div class="day done">W</div>
-          <div class="day done">T</div>
-          <div class="day today">F</div>
+          <div class="day today">T</div>
+          <div class="day">F</div>
           <div class="day">S</div>
           <div class="day">S</div>
         </div>
       </div>
 
       <div class="progress-card card">
-        <div class="label">skills</div>
-        <p>Your dashboard can show progress by communication area.</p>
+        <div class="label">skill growth</div>
+        <h3 class="preview-title">see what improves</h3>
+        <p>
+          chirrp can organize your progress across speaking, interviews,
+          group discussions, debate, and MUN practice.
+        </p>
 
         <div class="skill">
-          <div class="skill-top"><span>argumentation</span><span>72%</span></div>
-          <div class="bar"><div class="fill" style="width:72%"></div></div>
+          <div class="skill-top"><span>speaking clarity</span><span>tracked</span></div>
+          <div class="bar"><div class="fill" style="width:70%"></div></div>
         </div>
 
         <div class="skill">
-          <div class="skill-top"><span>interview ready</span><span>58%</span></div>
-          <div class="bar"><div class="fill" style="width:58%"></div></div>
+          <div class="skill-top"><span>interview confidence</span><span>tracked</span></div>
+          <div class="bar"><div class="fill" style="width:55%"></div></div>
         </div>
 
         <div class="skill">
-          <div class="skill-top"><span>MUN / debate</span><span>63%</span></div>
-          <div class="bar"><div class="fill" style="width:63%"></div></div>
+          <div class="skill-top"><span>debate readiness</span><span>tracked</span></div>
+          <div class="bar"><div class="fill" style="width:62%"></div></div>
         </div>
       </div>
     </section>
