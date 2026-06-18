@@ -1,3 +1,10 @@
+Here is the updated `index.html` with both removed:
+
+- removed top `log in`
+- removed bottom `signup open` and `login`
+- kept `join chirrp` and `start` going to `signup.html`
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,16 +75,6 @@
       display: flex;
       align-items: center;
       gap: 12px;
-    }
-
-    .login-link {
-      font-weight: 800;
-      color: #777;
-      font-size: 14px;
-    }
-
-    .login-link:hover {
-      color: #d63384;
     }
 
     .nav-btn,
@@ -518,21 +515,6 @@
       cursor: pointer;
     }
 
-    .tb-tabs {
-      display: flex;
-      gap: 8px;
-    }
-
-    .tb-tab {
-      background: white;
-      border: 1px solid #d4a0c0;
-      border-radius: 6px;
-      padding: 7px 14px;
-      color: #777;
-      font-size: 12px;
-      font-weight: 800;
-    }
-
     .tb-time {
       font-weight: 800;
       font-size: 13px;
@@ -556,10 +538,6 @@
 
       .nav-actions {
         gap: 8px;
-      }
-
-      .login-link {
-        font-size: 13px;
       }
 
       .nav-btn {
@@ -588,10 +566,6 @@
       .secondary-btn {
         width: 100%;
       }
-
-      .tb-tabs {
-        display: none;
-      }
     }
   </style>
 </head>
@@ -608,7 +582,6 @@
     </ul>
 
     <div class="nav-actions">
-      <a class="login-link" href="login.html">log in</a>
       <a class="nav-btn" href="signup.html">join chirrp</a>
     </div>
   </nav>
@@ -631,7 +604,7 @@
 
         <div class="hero-actions">
           <a class="primary-btn" href="signup.html">start practicing</a>
-          <a class="secondary-btn" href="login.html">already have an account?</a>
+          <a class="secondary-btn" href="#how">see how it works</a>
         </div>
 
         <div class="hero-note">
@@ -778,19 +751,12 @@
         <a href="#how">how it works</a>
         <a href="#practice">practice</a>
         <a href="about.html">about</a>
-        <a href="login.html">log in</a>
       </div>
     </div>
   </footer>
 
   <div class="taskbar">
     <button class="tb-start" onclick="location.href='signup.html'">start</button>
-
-    <div class="tb-tabs">
-      <a class="tb-tab" href="signup.html">signup open</a>
-      <a class="tb-tab" href="login.html">login</a>
-    </div>
-
     <div class="tb-time" id="clock">10:30 PM</div>
   </div>
 
@@ -809,3 +775,4 @@
   </script>
 </body>
 </html>
+```
